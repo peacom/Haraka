@@ -31,12 +31,15 @@
 # early_talker
 # helo.checks
 # see 'haraka -h tls' before enabling!
-# tls
+tls
 #
 # AUTH plugins require TLS before AUTH is advertised, see
 #     https://github.com/haraka/Haraka/wiki/Require-SSL-TLS
 # ----------
-# auth/flat_file
+db/mysql
+auth/flat_file
+ip_auth_whitelist
+message_logging
 # auth/auth_proxy
 
 # MAIL FROM

@@ -9,17 +9,29 @@ exports.register = function () {
     }
 }
 
-exports.load_flat_ini = function () {
+exports.load_flat_ini = async function () {
     this.cfg = this.config.get('auth_flat_file.ini', {
         booleans: [
             '+core.constrain_sender',
+            '+core.use_on_db',
         ]
     },
     () => {
         this.load_flat_ini();
     });
 
-    if (this.cfg.users === undefined) this.cfg.users = {}
+    if (this.cfg.core.use_on_db) {
+        const { EmailAccount } = server.notes.db
+        const accounts = await EmailAccount.findAll({ attributes: ["username", "password"], raw: true })
+        if (accounts.length) {
+            this.cfg.users = accounts.reduce((users, account) => {
+                users[account.username] = account.password
+                return users;
+            }, {})
+        }
+    }
+
+    else if (this.cfg.users === undefined) this.cfg.users = {}
 }
 
 exports.hook_capabilities = function (next, connection) {
