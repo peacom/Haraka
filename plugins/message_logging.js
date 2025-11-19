@@ -64,6 +64,7 @@ exports.error_handle = async function (next, connection, params) {
     await transaction.save()
     next()
   } catch (err) {
-    return next(DENY, err)
+    this.logerror(err)
+    next()
   }
 }
