@@ -14,22 +14,21 @@ exports.request_message = async function (next, connection, params) {
     if (!accountRequest) throw new Error(`Invalid Auth`)
     const account = await EmailAccount.findOne({ where: { username: accountRequest } })
     if (!account) throw new Error(`Not found any account by username: ${accountRequest}`)
-
-    await EmailTransaction.create({
-      harakaId: connection.transaction.uuid,
-      userId: account.id,
-      clientIP: connection.remote.ip,
-      port: connection.local.port,
-      tls: connection.tls.enabled,
-      from: connection.transaction.mail_from.address(),
-      to: connection.transaction.rcpt_to.map((r) => r.address()).join(','),
-      extraData: JSON.stringify({
-        subject: connection.transaction.header.get('Subject') || '',
-      }),
-      status: EMAIL_STATUS.PENDING,
-      createdDate: new Date(),
-    })
-
+    const toAddresses = connection.transaction.rcpt_to.map((r) => r.address())
+    for (const to of toAddresses) {
+      await EmailTransaction.create({
+        harakaId: connection.transaction.uuid,
+        userId: account.id,
+        clientIP: connection.remote.ip,
+        port: connection.local.port,
+        tls: connection.tls.enabled,
+        from: connection.transaction.mail_from.address(),
+        to,
+        extraData: JSON.stringify({ subject: connection.transaction.header.get('Subject') || '' }),
+        status: EMAIL_STATUS.PENDING,
+        createdDate: new Date(),
+      })
+    }
     next()
   } catch (err) {
     return next(DENYSOFT, err)
