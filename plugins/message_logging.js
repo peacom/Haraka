@@ -11,6 +11,7 @@ exports.request_message = async function (next, connection, params) {
   try {
     const { EmailAccount, EmailTransaction } = server.notes.db
     const accountRequest = connection.notes.auth_user
+    if (!accountRequest) throw new Error(`Invalid Auth`)
     const account = await EmailAccount.findOne({ where: { username: accountRequest } })
     if (!account) throw new Error(`Not found any account by username: ${accountRequest}`)
 
