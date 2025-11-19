@@ -43,7 +43,7 @@ exports.save_message_to_db = async function (next, connection, params) {
     if (!transaction) throw new Error(`Not found any transaction by id ${harakaId}`)
 
     transaction.status = EMAIL_STATUS.SUCCESS
-    transaction.statusMessage = "Success"
+    transaction.statusMessage = 'Success'
     await transaction.save()
 
     next(OK)
@@ -64,6 +64,6 @@ exports.error_handle = async function (next, connection, params) {
     await transaction.save()
     next()
   } catch (err) {
-    throw new Error(err)
+    return next(DENY, err)
   }
 }
