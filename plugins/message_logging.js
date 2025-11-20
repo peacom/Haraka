@@ -47,7 +47,7 @@ exports.save_message_to_db = async function (next, connection, params) {
       this.logerror(`Not found any transaction by id ${harakaId}`)
       return next()
     }
-    await EmailTransaction.update({ where: { harakaId } }, { status: EMAIL_STATUS.SUCCESS, statusMessage: 'Success' })
+    await EmailTransaction.update({ status: EMAIL_STATUS.SUCCESS, statusMessage: 'Success' }, { where: { harakaId } })
     next(OK)
   } catch (err) {
     return next(DENYSOFT, err)
@@ -64,7 +64,7 @@ exports.error_handle = async function (next, connection, params) {
       this.logerror(`Not found any transaction by id ${harakaId}`)
       return next()
     }
-    await EmailTransaction.update({ where: { harakaId } }, { status: EMAIL_STATUS.FAIL, statusMessage: JSON.stringify(params) })
+    await EmailTransaction.update({ status: EMAIL_STATUS.FAIL, statusMessage: JSON.stringify(params) }, { where: { harakaId } })
     next()
   } catch (err) {
     this.logerror(err)
