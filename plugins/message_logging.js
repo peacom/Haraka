@@ -9,6 +9,8 @@ exports.register = function () {
 
 exports.request_message = async function (next, connection, params) {
   try {
+    const harakaId = connection.transaction?.uuid
+    if (!harakaId) next()
     const { EmailAccount, EmailTransaction } = server.notes.db
     const accountRequest = connection.notes.auth_user
     if (!accountRequest) throw new Error(`Invalid Auth`)
