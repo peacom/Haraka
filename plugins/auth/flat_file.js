@@ -22,23 +22,21 @@ exports.load_flat_ini = async function () {
 
     if (this.cfg.core.use_on_db) {
         const { EmailAccount } = server.notes.db
-        const accounts = await EmailAccount.findAll({ attributes: ["username", "password"], raw: true })
+        const accounts = await EmailAccount.findAll({ attributes: ['username', 'password'], raw: true })
         if (accounts.length) {
             this.cfg.users = accounts.reduce((users, account) => {
                 users[account.username] = account.password
-                return users;
+                return users
             }, {})
         }
-    }
-
-    else if (this.cfg.users === undefined) this.cfg.users = {}
+    } else if (this.cfg.users === undefined) this.cfg.users = {}
 }
 
 exports.hook_capabilities = function (next, connection) {
-    if (!connection.remote.is_private && !connection.tls.enabled) {
-        connection.logdebug(this, "Auth disabled for insecure public connection");
-        return next();
-    }
+    // if (!connection.remote.is_private && !connection.tls.enabled) {
+    //     connection.logdebug(this, "Auth disabled for insecure public connection");
+    //     return next();
+    // }
 
     const methods = this.cfg.core?.methods ? this.cfg.core.methods.split(',') : null
     if (methods && methods.length > 0) {
