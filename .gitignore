@@ -23,5 +23,7 @@ coverage
 /config/smtp.json
 /config/tls_cert.pem
 /config/tls_key.pem
+/config/mysql.ini
+/config/smtp_forward.ini
 /queue
 yarn.lock
