@@ -20,7 +20,7 @@ exports.request_message = async function (next, connection, params) {
     for (const to of toAddresses) {
       await EmailTransaction.create({
         harakaId,
-        userId: account.id,
+        emailAccountId: account.id,
         clientIP: connection.remote.ip,
         port: connection.local.port,
         tls: connection.tls.enabled,
