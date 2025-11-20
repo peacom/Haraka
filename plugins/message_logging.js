@@ -16,7 +16,7 @@ exports.request_message = async function (next, connection, params) {
 
     await EmailTransaction.create({
       harakaId: connection.transaction.uuid,
-      userId: account.id,
+      emailAccountId: account.id,
       clientIP: connection.remote.ip,
       port: connection.local.port,
       tls: connection.tls.enabled,
@@ -43,7 +43,7 @@ exports.save_message_to_db = async function (next, connection, params) {
     if (!transaction) throw new Error(`Not found any transaction by id ${harakaId}`)
 
     transaction.status = EMAIL_STATUS.SUCCESS
-    transaction.statusMessage = "Success"
+    transaction.statusMessage = 'Success'
     await transaction.save()
 
     next(OK)

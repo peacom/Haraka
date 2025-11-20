@@ -12,7 +12,7 @@ class EmailTransaction extends Model {
         to: { type: DataTypes.STRING(100) },
         port: { type: DataTypes.INTEGER },
         clientIP: { type: DataTypes.TEXT },
-        userId: { type: DataTypes.INTEGER },
+        emailAccountId: { type: DataTypes.INTEGER },
         tls: { type: DataTypes.TINYINT },
         status: { type: DataTypes.TINYINT },
         statusMessage: { type: DataTypes.TEXT },
