@@ -34,8 +34,8 @@ exports.load_flat_ini = async function () {
 
 exports.hook_capabilities = function (next, connection) {
   // if (!connection.remote.is_private && !connection.tls.enabled) {
-  //     connection.logdebug(this, "Auth disabled for insecure public connection");
-  //     return next();
+  //   connection.logdebug(this, "Auth disabled for insecure public connection");
+  //   return next();
   // }
 
   const methods = this.cfg.core?.methods ? this.cfg.core.methods.split(',') : null
