@@ -38,14 +38,11 @@ exports.request_message = async function (next, connection, params) {
 exports.save_message_to_db = async function (next, connection, params) {
   try {
     const { EmailTransaction } = server.notes.db
-    const harakaId = connection.transaction.uuid
-    const transaction = await EmailTransaction.findOne({ where: { harakaId } })
-    if (!transaction) throw new Error(`Not found any transaction by id ${harakaId}`)
-
-    transaction.status = EMAIL_STATUS.SUCCESS
-    transaction.statusMessage = 'Success'
-    await transaction.save()
-
+    const harakaId = connection.transaction?.uuid
+    if (!harakaId) next()
+    const transactions = await EmailTransaction.findAll({ where: { harakaId } })
+    if (!transactions.length) this.logerror(`Not found any transaction by id ${harakaId}`)
+    await transactions.update({ where: { harakaId } }, { status: EMAIL_STATUS.SUCCESS, statusMessage: 'Success' })
     next(OK)
   } catch (err) {
     return next(DENYSOFT, err)
@@ -57,14 +54,9 @@ exports.error_handle = async function (next, connection, params) {
     const { EmailTransaction } = server.notes.db
     const harakaId = connection.transaction?.uuid
     if (!harakaId) next()
-
-    const transaction = await EmailTransaction.findOne({ where: { harakaId } })
-    if (!transaction) this.logerror(`Not found any transaction by id ${harakaId}`)
-
-    transaction.status = EMAIL_STATUS.FAIL
-    transaction.statusMessage = JSON.stringify(params)
-    await transaction.save()
-
+    const transactions = await EmailTransaction.findAll({ where: { harakaId } })
+    if (!transactions.length) this.logerror(`Not found any transaction by id ${harakaId}`)
+    await transactions.update({ where: { harakaId } }, { status: EMAIL_STATUS.FAIL, statusMessage: JSON.stringify(params) })
     next()
   } catch (err) {
     this.logerror(err)
