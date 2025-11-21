@@ -1,8 +1,8 @@
-
 [core]
 methods=PLAIN,LOGIN,CRAM-MD5
 ; constrain_sender=true
 use_on_db=true
+allow_auth_non_tls=true
 
 ; Using for case use_on_db is false
 [users]
