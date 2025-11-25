@@ -27,5 +27,6 @@ coverage
 /config/smtp_forward.ini
 /config/ip_auth_whitelist.ini
 /config/auth_flat_file.ini
+/ssl
 /queue
 yarn.lock
