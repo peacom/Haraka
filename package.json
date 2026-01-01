@@ -20,6 +20,8 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@peacom/core": "^2.0.134",
+    "@peacom/model": "^2.0.350",
     "address-rfc2821": "^2.1.3",
     "address-rfc2822": "^2.2.3",
     "async": "^3.2.6",
