@@ -21,7 +21,7 @@ exports.load_config = function () {
     server.notes.sendTelegramErrorMessage = async (error, debugMessage = "") => {
       const env = telegram_cfg.main;
       try {
-        const message = [`<a href="${env.WEB_URL || ""}>">${env.WEB_URL || ""}</a>`];
+        const message = [`<a href="${env.ENDPOINT || ""}>">${env.ENDPOINT || ""}</a>`];
         if (debugMessage) {
           message.push(`<strong>${debugMessage}</strong>`);
         }

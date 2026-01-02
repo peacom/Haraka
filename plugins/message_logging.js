@@ -66,7 +66,7 @@ exports.error_handle = async function (next, connection, params) {
     }
     const errorMessage = JSON.stringify(params);
     await EmailTransaction.update({ status: EMAIL_STATUS.FAIL, statusMessage: errorMessage }, { where: { harakaId } });
-    server.notes.sendTelegramErrorMessage(new Error(errorMessage)).then();
+    server.notes.sendTelegramErrorMessage(new Error(errorMessage), "Message Logging Plugin").then();
     next();
   } catch (err) {
     this.logerror(err);
