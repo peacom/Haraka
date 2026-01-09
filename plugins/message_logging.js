@@ -40,8 +40,8 @@ exports.hook_data_post = async function (next, connection) {
         tls: connection.tls.enabled,
         from: txn?.mail_from.address(),
         to: recipient,
-        subject: headers.get("subject"),
-        content: body.bodytext,
+        subject: headers.get("subject")?.trim(),
+        content: body.bodytext?.trim(),
         status: EMAIL_STATUS.PENDING,
         createdDate: new Date()
       });
