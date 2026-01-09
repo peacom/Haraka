@@ -1,6 +1,6 @@
-const { DataTypes, Model } = require('sequelize')
+const { DataTypes, Model } = require("sequelize");
 
-const EMAIL_STATUS = { PENDING: 1, SUCCESS: 2, FAIL: 3 }
+const EMAIL_STATUS = { PENDING: 1, SUCCESS: 2, FAIL: 3 };
 
 class EmailTransaction extends Model {
   static initModel(sequelize) {
@@ -10,6 +10,8 @@ class EmailTransaction extends Model {
         harakaId: { type: DataTypes.STRING(64) },
         from: { type: DataTypes.STRING(100) },
         to: { type: DataTypes.STRING(100) },
+        subject: { type: DataTypes.STRING(1000) },
+        content: { type: DataTypes.TEXT },
         port: { type: DataTypes.INTEGER },
         clientIP: { type: DataTypes.TEXT },
         emailAccountId: { type: DataTypes.INTEGER },
@@ -17,11 +19,11 @@ class EmailTransaction extends Model {
         status: { type: DataTypes.TINYINT },
         statusMessage: { type: DataTypes.TEXT },
         createdDate: { type: DataTypes.DATE },
-        extraData: { type: DataTypes.TEXT },
+        extraData: { type: DataTypes.TEXT }
       },
-      { sequelize, tableName: 'email_transaction', modelName: 'emailTransaction', timestamps: false },
-    )
+      { sequelize, tableName: "email_transaction", modelName: "emailTransaction", timestamps: false }
+    );
   }
 }
 
-module.exports = { EmailTransaction, EMAIL_STATUS }
+module.exports = { EmailTransaction, EMAIL_STATUS };
