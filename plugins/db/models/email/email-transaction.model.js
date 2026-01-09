@@ -10,7 +10,7 @@ class EmailTransaction extends Model {
         harakaId: { type: DataTypes.STRING(64) },
         from: { type: DataTypes.STRING(100) },
         to: { type: DataTypes.STRING(100) },
-        subject: { type: DataTypes.TEXT },
+        subject: { type: DataTypes.STRING(1000) },
         content: { type: DataTypes.TEXT },
         port: { type: DataTypes.INTEGER },
         clientIP: { type: DataTypes.TEXT },
