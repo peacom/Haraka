@@ -30,4 +30,5 @@ coverage
 /config/telegram.ini
 /ssl
 /queue
+/mail-attachments
 yarn.lock
