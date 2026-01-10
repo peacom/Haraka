@@ -290,13 +290,8 @@ exports.queue_forward = function (next, connection) {
       smtp_client.call_next(OK, smtp_client.response);
       smtp_client.release();
 
-      try {
-        const { EmailTransaction } = server.notes.db;
-        const harakaId = txn?.uuid;
-        await EmailTransaction.update({ status: EMAIL_STATUS.SUCCESS, statusMessage: "Delivered" }, { where: { harakaId } });
-      } catch (err) {
-        server.notes.sendTelegramErrorMessage(new Error(err), `${connection.notes.auth_user} - smtp_forward`).then();
-      }
+      // Emit event when forward success
+      server.notes.eventBus?.emit("smtp_forward_success", { harakaId: txn.uuid, response: smtp_client.response });
     });
 
     smtp_client.on("rset", () => {
