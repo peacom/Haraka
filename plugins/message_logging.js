@@ -1,8 +1,21 @@
 const { EMAIL_STATUS } = require("./db/models/email/email-transaction.model");
+const fs = require("fs");
+const path = require("path");
 
+/**
+ * https://haraka.github.io/core/Plugins/
+ * Register a Hook
+ */
 exports.register = function () {
   this.loginfo("message-logging plugin loaded");
   this.register_hook("deny", "error_handle");
+
+  if (!server.notes.eventBus) {
+    const EventEmitter = require("events");
+    server.notes.eventBus = new EventEmitter();
+  }
+
+  server.notes.eventBus.on("smtp_forward_success", this.forward_success.bind(this));
 };
 
 exports.hook_data = function (next, connection) {
@@ -20,6 +33,8 @@ exports.hook_data_post = async function (next, connection) {
     const headers = txn?.header;
     const body = txn?.body;
 
+    this.loginfo(`${Object.keys(body)}`);
+
     if (!harakaId) return next();
 
     // Auth validate
@@ -28,6 +43,20 @@ exports.hook_data_post = async function (next, connection) {
     const account = await EmailAccount.findOne({ where: { username: accountRequest } });
     if (!account) throw new Error(`Not found any account by username: ${accountRequest}`);
     this.accountRequest = accountRequest;
+
+    // const attachments = [];
+    // for (const part of body.children) {
+    //   if (part.attachment_stream) {
+    //     const filename = part.disposition_params?.filename || `file-${Date.now()}`;
+    //     const savePath = path.join(__dirname, "../mail-attachments");
+    //     if (!fs.existsSync(savePath)) fs.mkdirSync(savePath, { recursive: true });
+    //     const filePath = path.resolve(savePath, filename);
+    //     const writeStream = fs.createWriteStream(filePath);
+    //     // TODO saving attachment
+    //     // part.attachment_stream.pipe(writeStream, { end: true });
+    //     // attachments.push({ filename: part.disposition_params?.filename, mime: part.ctype, size: part.body?.length || 0 });
+    //   }
+    // }
 
     // Create mail request
     const recipients = rcpt_to.map((r) => r.address());
@@ -52,6 +81,16 @@ exports.hook_data_post = async function (next, connection) {
   }
 };
 
+exports.forward_success = async function (payload) {
+  try {
+    const { harakaId } = payload;
+    updateMessageStatus(harakaId, EMAIL_STATUS.SUCCESS, "Delivered").then();
+  } catch (err) {
+    this.logerror(err);
+    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then();
+  }
+};
+
 exports.error_handle = async function (next, connection, params) {
   try {
     const { EmailTransaction } = server.notes.db;
@@ -64,11 +103,11 @@ exports.error_handle = async function (next, connection, params) {
     }
     const errorMessage = JSON.stringify(params);
     await updateMessageStatus(harakaId, EMAIL_STATUS.FAIL, errorMessage);
-    server.notes.sendTelegramErrorMessage(new Error(errorMessage), `${this.accountRequest} - Message Logging Plugin`).then();
+    server.notes.sendTelegramErrorMessage(new Error(errorMessage), `${this.accountRequest} - message_logging`).then();
     next();
   } catch (err) {
     this.logerror(err);
-    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - Message Logging Plugin`).then();
+    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then();
     next();
   }
 };
