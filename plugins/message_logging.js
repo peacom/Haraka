@@ -33,8 +33,6 @@ exports.hook_data_post = async function (next, connection) {
     const headers = txn?.header;
     const body = txn?.body;
 
-    this.loginfo(`${Object.keys(body)}`);
-
     if (!harakaId) return next();
 
     // Auth validate
@@ -71,6 +69,7 @@ exports.hook_data_post = async function (next, connection) {
         to: recipient,
         subject: headers.get("subject")?.trim(),
         content: body.bodytext?.trim(),
+        isHtml: body.is_html,
         status: EMAIL_STATUS.PENDING,
         createdDate: new Date()
       });
