@@ -279,7 +279,7 @@ exports.queue_forward = function (next, connection) {
       smtp_client.start_data(txn.message_stream);
     });
 
-    smtp_client.on("dot", async () => {
+    smtp_client.on("dot", () => {
       if (dead_sender() || !txn) return;
 
       get_rs().add(plugin, { pass: smtp_client.response });
