@@ -287,11 +287,12 @@ exports.queue_forward = function (next, connection) {
         smtp_client.send_command("RSET");
         return;
       }
-      smtp_client.call_next(OK, smtp_client.response);
-      smtp_client.release();
 
       // Emit event when forward success
-      server.notes.eventBus?.emit("smtp_forward_success", { harakaId: txn.uuid, response: smtp_client.response });
+      server.notes.eventBus?.emit("smtp_forward_success", { harakaId: txn.uuid, response: smtp_client.response, providerHost: smtp_client.host });
+
+      smtp_client.call_next(OK, smtp_client.response);
+      smtp_client.release();
     });
 
     smtp_client.on("rset", () => {
