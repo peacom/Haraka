@@ -80,14 +80,21 @@ exports.hook_data_post = async function (next, connection) {
   }
 };
 
-exports.forward_success = async function (payload) {
-  try {
-    const { harakaId } = payload;
-    updateMessageStatus(harakaId, EMAIL_STATUS.SUCCESS, "Delivered").then();
-  } catch (err) {
-    this.logerror(err);
-    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then();
-  }
+exports.forward_success = function (payload) {
+  const { EmailProvider } = server.notes.db;
+  const { harakaId, response, providerHost } = payload;
+  const [_status, messageId] = response[0].split(" ");
+
+  EmailProvider.create({
+    emailTransactionId: harakaId,
+    providerEmailTransactionId: messageId,
+    providerName: providerHost,
+    lastUpdated: new Date()
+  }).catch((err) => server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then());
+
+  updateMessageStatus(harakaId, EMAIL_STATUS.SUCCESS, "Delivered").catch((err) =>
+    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then()
+  );
 };
 
 exports.error_handle = async function (next, connection, params) {
