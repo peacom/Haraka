@@ -83,7 +83,7 @@ exports.hook_data_post = async function (next, connection) {
 exports.forward_success = function (payload) {
   const { EmailProvider } = server.notes.db;
   const { harakaId, response, providerHost } = payload;
-  const [_status, messageId] = response[0].split(" ");
+  const messageId = response[0].split(" ").at(-1);
 
   EmailProvider.create({
     emailTransactionId: harakaId,
