@@ -85,13 +85,9 @@ exports.forward_success = function (payload) {
   const { harakaId, response, providerHost } = payload;
   const messageId = response[0].split(" ").at(-1);
 
-  EmailProvider.create({
-    emailTransactionId: harakaId,
-    providerEmailTransactionId: messageId,
-    providerName: "",
-    host: providerHost,
-    lastUpdated: new Date()
-  }).catch((err) => server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then());
+  EmailProvider.create({ emailTransactionId: harakaId, providerEmailTransactionId: messageId, host: providerHost, lastUpdated: new Date() }).catch(
+    (err) => server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then()
+  );
 
   updateMessageStatus(harakaId, EMAIL_STATUS.SUCCESS, "Delivered").catch((err) =>
     server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then()
