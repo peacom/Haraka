@@ -88,7 +88,8 @@ exports.forward_success = function (payload) {
   EmailProvider.create({
     emailTransactionId: harakaId,
     providerEmailTransactionId: messageId,
-    providerName: providerHost,
+    providerName: "",
+    host: providerHost,
     lastUpdated: new Date()
   }).catch((err) => server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then());
 
