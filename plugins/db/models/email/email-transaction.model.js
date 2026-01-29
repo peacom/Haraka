@@ -20,6 +20,7 @@ class EmailTransaction extends Model {
         status: { type: DataTypes.TINYINT },
         statusMessage: { type: DataTypes.TEXT },
         createdDate: { type: DataTypes.DATE },
+        lastUpdated: { type: DataTypes.DATE },
         extraData: { type: DataTypes.TEXT }
       },
       { sequelize, tableName: "email_transaction", modelName: "emailTransaction", timestamps: false, ...opts }
