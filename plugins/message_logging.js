@@ -117,5 +117,5 @@ exports.error_handle = async function (next, connection, params) {
 
 async function updateMessageStatus(harakaId, statusCode, statusMessage) {
   const { EmailTransaction } = server.notes.db;
-  await EmailTransaction.update({ status: statusCode, statusMessage }, { where: { harakaId } });
+  await EmailTransaction.update({ status: statusCode, statusMessage, lastUpdated: new Date() }, { where: { harakaId } });
 }

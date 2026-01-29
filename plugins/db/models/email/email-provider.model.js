@@ -9,6 +9,7 @@ class EmailProvider extends Model {
         emailTransactionId: { type: DataTypes.STRING(64), primaryKey: true },
         providerEmailTransactionId: { type: DataTypes.STRING(64) },
         host: { type: DataTypes.STRING(255) },
+        recipient: { type: DataTypes.STRING(100) },
         providerStatus: { type: DataTypes.TINYINT },
         providerStatusMessage: { type: DataTypes.TEXT },
         extraData: { type: DataTypes.TEXT },
