@@ -1,6 +1,7 @@
 const { EMAIL_STATUS } = require("./db/models/email/email-transaction.model");
 const fs = require("fs");
 const path = require("path");
+const { Op } = require("sequelize");
 
 /**
  * https://haraka.github.io/core/Plugins/
@@ -9,6 +10,7 @@ const path = require("path");
 exports.register = function () {
   this.loginfo("message-logging plugin loaded");
   this.register_hook("deny", "error_handle");
+  this.register_hook("bounce", "bounce_handle");
 
   if (!server.notes.eventBus) {
     const EventEmitter = require("events");
@@ -82,22 +84,42 @@ exports.hook_data_post = async function (next, connection) {
 
 exports.forward_success = function (payload) {
   const { EmailProvider } = server.notes.db;
-  const { harakaId, response, providerHost } = payload;
+  const { harakaId, response, providerHost, recipients } = payload;
   const messageId = response[0].split(" ").at(-1);
-
-  EmailProvider.create({ emailTransactionId: harakaId, providerEmailTransactionId: messageId, host: providerHost, lastUpdated: new Date() }).catch(
-    (err) => server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then()
-  );
+  Promise.all(
+    recipients.map((rcp) => {
+      return EmailProvider.create({
+        emailTransactionId: harakaId,
+        providerEmailTransactionId: messageId,
+        recipient: formatAddress(rcp.original),
+        host: providerHost,
+        lastUpdated: new Date()
+      });
+    })
+  ).catch((err) => server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then());
 
   updateMessageStatus(harakaId, EMAIL_STATUS.SUCCESS, "Delivered").catch((err) =>
     server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then()
   );
 };
 
+exports.bounce_handle = async function (next, hook_data) {
+  const { EmailTransaction } = server.notes.db;
+  const { uuid: harakaId, mail_from, rcpt_to } = hook_data.todo;
+
+  EmailTransaction.update(
+    { status: EMAIL_STATUS.BOUNCE, statusMessage: rcpt_to[0].dsn_smtp_response, lastUpdated: new Date() },
+    { where: { harakaId, to: formatAddress(rcpt_to[0].original) } }
+  ).catch((err) => server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then());
+  next();
+};
+
 exports.error_handle = async function (next, connection, params) {
+  const txn = connection.transaction;
+  const harakaId = txn?.uuid;
+
   try {
     const { EmailTransaction } = server.notes.db;
-    const harakaId = connection.transaction?.uuid;
     if (!harakaId) return next();
     const transactions = await EmailTransaction.count({ where: { harakaId } });
     if (!transactions) {
@@ -117,5 +139,13 @@ exports.error_handle = async function (next, connection, params) {
 
 async function updateMessageStatus(harakaId, statusCode, statusMessage) {
   const { EmailTransaction } = server.notes.db;
-  await EmailTransaction.update({ status: statusCode, statusMessage, lastUpdated: new Date() }, { where: { harakaId } });
+  await EmailTransaction.update(
+    { status: statusCode, statusMessage, lastUpdated: new Date() },
+    { where: { harakaId, status: { [Op.ne]: EMAIL_STATUS.BOUNCE } } }
+  );
+}
+
+function formatAddress(address) {
+  if (typeof address !== "string") return "";
+  return address.replace(/[<>]/g, "");
 }
