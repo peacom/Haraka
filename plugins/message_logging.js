@@ -88,7 +88,7 @@ exports.forward_success = function (payload) {
   const messageId = response[0].split(" ").at(-1);
   Promise.all(
     recipients.map((rcp) => {
-      return EmailProvider.create({
+      return EmailProvider.upsert({
         emailTransactionId: harakaId,
         providerEmailTransactionId: messageId,
         recipient: formatAddress(rcp.original),
