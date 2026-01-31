@@ -9,7 +9,7 @@ exports.register = function () {
  * https://github.com/haraka/haraka-config
  */
 exports.load_config = function () {
-  const telegram_cfg = this.config.get("telegram.ini", "ini", () => {
+  const cfg = this.config.get("system_config.ini", "ini", () => {
     this.load_config();
   });
 
@@ -19,15 +19,16 @@ exports.load_config = function () {
    */
   try {
     server.notes.sendTelegramErrorMessage = async (error, debugMessage = "") => {
-      const env = telegram_cfg.main;
+      const { ENDPOINT } = cfg.main;
+      const { MONITORING_TELEGRAM_BOT_TOKEN, MONITORING_TELEGRAM_GROUP_ID } = cfg.telegram;
       try {
-        const message = [`<a href="${env.ENDPOINT || ""}>">${env.ENDPOINT || ""}</a>`];
+        const message = [`<a href="${ENDPOINT || ""}>">${ENDPOINT || ""}</a>`];
         if (debugMessage) {
           message.push(`<strong>${debugMessage}</strong>`);
         }
         message.push(errorToTraceText(error, false));
-        return await sendTelegramMessage(env.MONITORING_TELEGRAM_BOT_TOKEN, {
-          chat_id: env.MONITORING_TELEGRAM_GROUP_ID,
+        return await sendTelegramMessage(MONITORING_TELEGRAM_BOT_TOKEN, {
+          chat_id: MONITORING_TELEGRAM_GROUP_ID,
           text: `${message.join("\n")}${message.length ? "\n" : ""}<code>${htmlEncode(error.stack)}</code>`,
           parse_mode: "HTML"
         });

@@ -1,0 +1,19 @@
+ENDPOINT=http://localhost
+
+[mysql]
+DB_HOST=localhost
+DB_USERNAME=root
+DB_PASSWORD=
+DB_PORT=3306
+DB_NAME=
+DB_POOL_MIN=35
+DB_POOL_MAX=500
+
+[telegram]
+MONITORING_TELEGRAM_BOT_TOKEN=
+MONITORING_TELEGRAM_GROUP_ID=
+
+[ip_whitelist]
+isCheckWhitelist=true
+hosts[] = 0.0.0.0
+hosts[] = 0.0.0.0/24

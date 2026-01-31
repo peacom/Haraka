@@ -9,7 +9,7 @@ exports.register = function () {
  * https://github.com/haraka/haraka-config
  */
 exports.load_config = function () {
-  const mysql_cfg = this.config.get("mysql.ini", "ini", () => {
+  const cfg = this.config.get("system_config.ini", "ini", () => {
     this.load_config();
   });
 
@@ -18,7 +18,7 @@ exports.load_config = function () {
    * https://github.com/haraka/Haraka/blob/master/docs/Plugins.md
    */
   try {
-    server.notes.db = initDatabase(mysql_cfg.general);
+    server.notes.db = initDatabase(cfg.mysql);
     this.loginfo("MySQL connection initialized");
   } catch (err) {
     throw new Error(err);

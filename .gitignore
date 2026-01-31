@@ -23,11 +23,9 @@ coverage
 /config/smtp.json
 /config/tls_cert.pem
 /config/tls_key.pem
-/config/mysql.ini
 /config/smtp_forward.ini
-/config/ip_auth_whitelist.ini
 /config/auth_flat_file.ini
-/config/telegram.ini
+/config/system_config.ini
 /ssl
 /queue
 /mail-attachments

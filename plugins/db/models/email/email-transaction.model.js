@@ -1,6 +1,6 @@
 const { DataTypes, Model } = require("sequelize");
 
-const EMAIL_STATUS = { PENDING: 1, SUCCESS: 2, FAIL: 3 };
+const EMAIL_STATUS = { PENDING: 1, SUCCESS: 2, FAIL: 3, BOUNCE: 4 };
 
 class EmailTransaction extends Model {
   static init(sequelize, opts) {
