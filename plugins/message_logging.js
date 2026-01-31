@@ -67,8 +67,8 @@ exports.hook_data_post = async function (next, connection) {
         clientIP: connection.remote.ip,
         port: connection.local.port,
         tls: connection.tls.enabled,
-        from: txn?.mail_from.address(),
-        to: recipient,
+        from: formatAddress(txn?.mail_from.address()),
+        to: formatAddress(recipient),
         subject: headers.get("subject")?.trim(),
         content: body.bodytext?.trim(),
         isHtml: body.is_html,
@@ -147,5 +147,5 @@ async function updateMessageStatus(harakaId, statusCode, statusMessage) {
 
 function formatAddress(address) {
   if (typeof address !== "string") return "";
-  return address.replace(/[<>]/g, "");
+  return address.replace(/[<>]/g, "").toLowerCase();
 }

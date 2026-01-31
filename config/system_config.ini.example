@@ -15,5 +15,5 @@ MONITORING_TELEGRAM_GROUP_ID=
 
 [ip_whitelist]
 isCheckWhitelist=true
-hosts[] = 0.0.0.0
-hosts[] = 0.0.0.0/24
+ips[] = 0.0.0.0
+ips[] = 0.0.0.0/24
