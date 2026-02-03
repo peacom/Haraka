@@ -29,4 +29,5 @@ coverage
 /ssl
 /queue
 /mail-attachments
+/logs
 yarn.lock
