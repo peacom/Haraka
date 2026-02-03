@@ -27,12 +27,20 @@ Create file `me` and add a name you want to that by default is `haraka`(not reco
 ### Step 3: Setup file systemd
 Create `haraka-smtp.service` from `/etc/systemd/system/` 
 
-`cd /etc/systemd/system/`
-`sudo touch haraka-smtp.service`
+```sh
+cd /etc/systemd/system/
+sudo touch haraka-smtp.service
+```
 
-`sudo vi haraka-smtp.service` according to `./haraka-smtp.service`
-note: edit name `ubuntu` by your server name
+Edit `haraka-smtp.service`
+```sh
+sudo vi haraka-smtp.service
+```
+Notes: According to `./haraka-smtp.service`, in `haraka-smtp.service` change name `ubuntu` by your server name
 
-`sudo systemctl daemon-reload`
-`sudo systemctl restart haraka-smtp.service`
-`sudo systemctl status haraka-smtp.service`
+Start `haraka-smtp.service`
+```sh
+sudo systemctl daemon-reload
+sudo systemctl restart haraka-smtp.service
+sudo systemctl status haraka-smtp.service
+```
