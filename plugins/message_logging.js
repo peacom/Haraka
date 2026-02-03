@@ -2,6 +2,7 @@ const { EMAIL_STATUS } = require("./db/models/email/email-transaction.model");
 const fs = require("fs");
 const path = require("path");
 const { Op } = require("sequelize");
+const { emailLog } = require("./logging/winston");
 
 /**
  * https://haraka.github.io/core/Plugins/
@@ -31,9 +32,11 @@ exports.hook_data_post = async function (next, connection) {
     const { EmailAccount, EmailTransaction } = server.notes.db;
     const txn = connection.transaction;
     const harakaId = txn?.uuid;
-    const rcpt_to = txn?.rcpt_to;
+    const from = formatAddress(txn?.mail_from.address());
+    const recipients = txn?.rcpt_to.map((r) => formatAddress(r.address()));
     const headers = txn?.header;
     const body = txn?.body;
+    const subject = headers.get("subject")?.trim();
 
     if (!harakaId) return next();
 
@@ -43,6 +46,11 @@ exports.hook_data_post = async function (next, connection) {
     const account = await EmailAccount.findOne({ where: { username: accountRequest } });
     if (!account) throw new Error(`Not found any account by username: ${accountRequest}`);
     this.accountRequest = accountRequest;
+    emailLog.info(`Account request: ${accountRequest}`);
+    emailLog.info(`harakaId: ${harakaId}`);
+    emailLog.info(`Have email from ${from} to ${JSON.stringify(recipients)}`);
+    emailLog.info(`Subject: ${subject}`);
+    emailLog.info(`---------------------------------------------------------------------------------`);
 
     // const attachments = [];
     // for (const part of body.children) {
@@ -59,7 +67,6 @@ exports.hook_data_post = async function (next, connection) {
     // }
 
     // Create mail request
-    const recipients = rcpt_to.map((r) => r.address());
     for (const recipient of recipients) {
       await EmailTransaction.create({
         harakaId,
@@ -67,9 +74,9 @@ exports.hook_data_post = async function (next, connection) {
         clientIP: connection.remote.ip,
         port: connection.local.port,
         tls: connection.tls.enabled,
-        from: formatAddress(txn?.mail_from.address()),
-        to: formatAddress(recipient),
-        subject: headers.get("subject")?.trim(),
+        from,
+        to: recipient,
+        subject,
         content: body.bodytext?.trim(),
         isHtml: body.is_html,
         status: EMAIL_STATUS.PENDING,
@@ -86,8 +93,12 @@ exports.forward_success = async function (payload) {
   const { EmailProvider } = server.notes.db;
   const { harakaId, response, providerHost, recipients } = payload;
   const messageId = response[0].split(" ").at(-1);
+  emailLog.info(`forward_success: messageId - ${messageId}`);
+  emailLog.info(`harakaId: ${harakaId}`);
+  emailLog.info(`providerHost: ${providerHost}`);
+  emailLog.info(`recipients: ${JSON.stringify(recipients)}`);
+  emailLog.info(`---------------------------------------------------------------------------------`);
 
-  this.loginfo(`recipients>>>> ${JSON.stringify(recipients)}`);
   for (const rcp of recipients) {
     await EmailProvider.upsert({
       emailTransactionId: harakaId,
@@ -106,10 +117,18 @@ exports.forward_success = async function (payload) {
 exports.bounce_handle = async function (next, hook_data) {
   const { EmailTransaction } = server.notes.db;
   const { uuid: harakaId, mail_from, rcpt_to } = hook_data.todo;
+  const statusMessage = rcpt_to[0].dsn_smtp_response;
+  const recipient = formatAddress(rcpt_to[0].original);
+
+  emailLog.error(`bounce_handle: harakaId - ${harakaId}`);
+  emailLog.error(`From: ${mail_from}`);
+  emailLog.error(`Recipient: ${recipient}`);
+  emailLog.error(`Bounce Message: ${JSON.stringify(statusMessage)}`);
+  emailLog.error(`---------------------------------------------------------------------------------`);
 
   EmailTransaction.update(
     { status: EMAIL_STATUS.BOUNCE, statusMessage: rcpt_to[0].dsn_smtp_response, lastUpdated: new Date() },
-    { where: { harakaId, to: formatAddress(rcpt_to[0].original) } }
+    { where: { harakaId, to: recipient } }
   ).catch((err) => server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then());
   next();
 };
@@ -121,12 +140,19 @@ exports.error_handle = async function (next, connection, params) {
   try {
     const { EmailTransaction } = server.notes.db;
     if (!harakaId) return next();
+    emailLog.error(`error_handle: harakaId - ${harakaId}`);
     const transactions = await EmailTransaction.count({ where: { harakaId } });
+
     if (!transactions) {
       this.logerror(`Not found any transaction by id ${harakaId}`);
+      emailLog.error(`Error Message: Not found any transaction by id ${harakaId}`);
+      emailLog.error(`---------------------------------------------------------------------------------`);
       return next();
     }
     const errorMessage = JSON.stringify(params);
+    emailLog.error(`Error Message: ${errorMessage}`);
+    emailLog.error(`---------------------------------------------------------------------------------`);
+
     await updateMessageStatus(harakaId, EMAIL_STATUS.FAIL, errorMessage);
     server.notes.sendTelegramErrorMessage(new Error(errorMessage), `${this.accountRequest} - message_logging`).then();
     next();
