@@ -1,4 +1,4 @@
-### Step 1: Setup Haraka Service
+### Step 1: Install Packages with yarn
 
 ```sh
 yarn
