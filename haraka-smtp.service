@@ -1,0 +1,17 @@
+[Unit]
+Description=Haraka SMTP
+After=network.target
+
+[Service]
+ExecStartPre=/bin/mkdir -p /usr/projects/pm2/logs/haraka
+ExecStartPre=/bin/chown ubuntu:ubuntu /usr/projects/pm2/logs/haraka
+User=root
+WorkingDirectory=/usr/projects/Haraka
+ExecStart=/home/ubuntu/.nvm/versions/node/v23.11.1/bin/node /usr/projects/Haraka/haraka.js
+Restart=always
+RestartSec=10
+StandardOutput=append:/usr/projects/pm2/logs/haraka/app.log
+StandardError=append:/usr/projects/pm2/logs/haraka/app-error.log
+
+[Install]
+WantedBy=multi-user.target
