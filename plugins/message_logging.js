@@ -50,6 +50,7 @@ exports.hook_data_post = async function (next, connection) {
     emailLog.info(`Account Request: ${accountRequest}`);
     emailLog.info(`Haraka ID: ${harakaId}`);
     emailLog.info(`Have email from ${from} to ${JSON.stringify(recipients)}`);
+    emailLog.info(`Raw Subject: ${headers.get("subject")}`);
     emailLog.info(`Subject: ${subject}`);
     emailLog.info(`---------------------------------------------------------------------------------`);
 
