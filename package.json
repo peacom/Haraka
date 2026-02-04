@@ -39,6 +39,7 @@
     "haraka-utils": "^1.1.4",
     "ip-cidr": "^4.0.2",
     "ipaddr.js": "~2.2.0",
+    "mimelib": "^0.3.1",
     "mysql2": "^3.15.3",
     "node-gyp": "^11.5.0",
     "nopt": "^8.1.0",

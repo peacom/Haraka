@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { Op } = require("sequelize");
 const { emailLog } = require("./logging/winston");
+const { decodeMimeWord } = require("mimelib");
 
 /**
  * https://haraka.github.io/core/Plugins/
@@ -36,8 +37,8 @@ exports.hook_data_post = async function (next, connection) {
     const recipients = txn?.rcpt_to.map((r) => formatAddress(r.address()));
     const headers = txn?.header;
     const body = txn?.body;
-    const subject = headers.get("subject")?.trim();
-
+    // Get Email Subject and convert MIME string to UTF-8
+    const subject = decodeMimeWord(headers.get("subject")?.trim());
     if (!harakaId) return next();
 
     // Auth validate
@@ -46,8 +47,8 @@ exports.hook_data_post = async function (next, connection) {
     const account = await EmailAccount.findOne({ where: { username: accountRequest } });
     if (!account) throw new Error(`Not found any account by username: ${accountRequest}`);
     this.accountRequest = accountRequest;
-    emailLog.info(`Account request: ${accountRequest}`);
-    emailLog.info(`harakaId: ${harakaId}`);
+    emailLog.info(`Account Request: ${accountRequest}`);
+    emailLog.info(`Haraka ID: ${harakaId}`);
     emailLog.info(`Have email from ${from} to ${JSON.stringify(recipients)}`);
     emailLog.info(`Subject: ${subject}`);
     emailLog.info(`---------------------------------------------------------------------------------`);
@@ -94,8 +95,8 @@ exports.forward_success = async function (payload) {
   const { harakaId, response, providerHost, recipients } = payload;
   const messageId = response[0].split(" ").at(-1);
   const recipientAddresses = recipients.map((rcp) => formatAddress(rcp.original));
-  emailLog.info(`forward_success: messageId - ${messageId}`);
-  emailLog.info(`harakaId: ${harakaId}`);
+  emailLog.info(`forward_success: Email Provider Txn ID - ${messageId}`);
+  emailLog.info(`Haraka ID: ${harakaId}`);
   emailLog.info(`Provider Host: ${providerHost}`);
   emailLog.info(`Recipients: ${JSON.stringify(recipientAddresses)}`);
   emailLog.info(`---------------------------------------------------------------------------------`);
@@ -121,7 +122,7 @@ exports.bounce_handle = async function (next, hook_data) {
   const statusMessage = rcpt_to[0].dsn_smtp_response;
   const recipient = formatAddress(rcpt_to[0].original);
 
-  emailLog.error(`bounce_handle: harakaId - ${harakaId}`);
+  emailLog.error(`bounce_handle: Haraka ID - ${harakaId}`);
   emailLog.error(`From: ${mail_from}`);
   emailLog.error(`Recipient: ${recipient}`);
   emailLog.error(`Bounce Message: ${JSON.stringify(statusMessage)}`);
@@ -141,7 +142,7 @@ exports.error_handle = async function (next, connection, params) {
   try {
     const { EmailTransaction } = server.notes.db;
     if (!harakaId) return next();
-    emailLog.error(`error_handle: harakaId - ${harakaId}`);
+    emailLog.error(`error_handle: Haraka ID - ${harakaId}`);
     const transactions = await EmailTransaction.count({ where: { harakaId } });
 
     if (!transactions) {
