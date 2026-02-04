@@ -84,6 +84,7 @@ exports.hook_data_post = async function (next, connection) {
         content: body.bodytext?.trim(),
         isHtml: body.is_html,
         status: EMAIL_STATUS.PENDING,
+        statusMessage: "Pending",
         createdDate: new Date()
       });
     }
