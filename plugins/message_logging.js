@@ -37,8 +37,7 @@ exports.hook_data_post = async function (next, connection) {
     const recipients = txn?.rcpt_to.map((r) => formatAddress(r.address()));
     const headers = txn?.header;
     const body = txn?.body;
-    // Get Email Subject and convert MIME string to UTF-8
-    const subject = decodeMimeWord(headers.get("subject")?.trim());
+
     if (!harakaId) return next();
 
     // Auth validate
@@ -47,10 +46,13 @@ exports.hook_data_post = async function (next, connection) {
     const account = await EmailAccount.findOne({ where: { username: accountRequest } });
     if (!account) throw new Error(`Not found any account by username: ${accountRequest}`);
     this.accountRequest = accountRequest;
+
+    // Get Email Subject and convert MIME string to UTF-8
+    const subject = formatSubject(headers.get("subject"));
+
     emailLog.info(`Account Request: ${accountRequest}`);
     emailLog.info(`Haraka ID: ${harakaId}`);
-    emailLog.info(`Have email from ${from} to ${JSON.stringify(recipients)}`);
-    emailLog.info(`Raw Subject: ${headers.get("subject")}`);
+    emailLog.info(`Have email from <${from}> to ${JSON.stringify(recipients)}`);
     emailLog.info(`Subject: ${subject}`);
     emailLog.info(`---------------------------------------------------------------------------------`);
 
@@ -96,7 +98,7 @@ exports.forward_success = async function (payload) {
   const { harakaId, response, providerHost, recipients } = payload;
   const messageId = response[0].split(" ").at(-1);
   const recipientAddresses = recipients.map((rcp) => formatAddress(rcp.original));
-  emailLog.info(`forward_success: Email Provider Txn ID - ${messageId}`);
+  emailLog.info(`forward_success: Email Provider Txn ID - <${messageId}>`);
   emailLog.info(`Haraka ID: ${harakaId}`);
   emailLog.info(`Provider Host: ${providerHost}`);
   emailLog.info(`Recipients: ${JSON.stringify(recipientAddresses)}`);
@@ -161,6 +163,7 @@ exports.error_handle = async function (next, connection, params) {
     next();
   } catch (err) {
     this.logerror(err);
+    emailLog.error(err);
     server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then();
     next();
   }
@@ -174,7 +177,15 @@ async function updateMessageStatus(harakaId, statusCode, statusMessage) {
   );
 }
 
-function formatAddress(address) {
-  if (typeof address !== "string") return "";
-  return address.replace(/[<>]/g, "").toLowerCase();
+function formatAddress(rawAddress) {
+  if (typeof rawAddress !== "string") return "";
+  return rawAddress.replace(/[<>]/g, "").toLowerCase();
+}
+
+function formatSubject(rawSubject) {
+  return rawSubject
+    .trim()
+    .split("\n")
+    .map((t) => decodeMimeWord(t.trim()))
+    .join("");
 }
