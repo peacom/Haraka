@@ -93,17 +93,18 @@ exports.forward_success = async function (payload) {
   const { EmailProvider } = server.notes.db;
   const { harakaId, response, providerHost, recipients } = payload;
   const messageId = response[0].split(" ").at(-1);
+  const recipientAddresses = recipients.map((rcp) => formatAddress(rcp.original));
   emailLog.info(`forward_success: messageId - ${messageId}`);
   emailLog.info(`harakaId: ${harakaId}`);
-  emailLog.info(`providerHost: ${providerHost}`);
-  emailLog.info(`recipients: ${JSON.stringify(recipients)}`);
+  emailLog.info(`Provider Host: ${providerHost}`);
+  emailLog.info(`Recipients: ${JSON.stringify(recipientAddresses)}`);
   emailLog.info(`---------------------------------------------------------------------------------`);
 
-  for (const rcp of recipients) {
+  for (const address of recipientAddresses) {
     await EmailProvider.upsert({
       emailTransactionId: harakaId,
       providerEmailTransactionId: messageId,
-      recipient: formatAddress(rcp.original),
+      recipient: address,
       host: providerHost,
       lastUpdated: new Date()
     });

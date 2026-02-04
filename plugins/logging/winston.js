@@ -53,35 +53,35 @@ function createLoggerOptions(loggerName) {
   return rs;
 }
 
-container.add("database", createLoggerOptions("database"));
+// container.add("database", createLoggerOptions("database"));
 
-container.add("http", createLoggerOptions("http"));
+// container.add("http", createLoggerOptions("http"));
 
-container.add("app", {
-  ...createLoggerOptions("app"),
-  exceptionHandlers: [
-    new winston.transports.DailyRotateFile({
-      filename: `${AppConf.logFile.folder}`.concat("/exception-%DATE%.log"),
-      datePattern: AppConf.logFile.datePattern,
-      zippedArchive: AppConf.logFile.zippedArchive,
-      handleExceptions: AppConf.logFile.handleExceptions,
-      maxSize: AppConf.logFile.maxSize,
-      maxFiles: AppConf.logFile.maxFiles,
-      level: "info"
-    })
-  ]
-});
+// container.add("app", {
+//   ...createLoggerOptions("app"),
+//   exceptionHandlers: [
+//     new winston.transports.DailyRotateFile({
+//       filename: `${AppConf.logFile.folder}`.concat("/exception-%DATE%.log"),
+//       datePattern: AppConf.logFile.datePattern,
+//       zippedArchive: AppConf.logFile.zippedArchive,
+//       handleExceptions: AppConf.logFile.handleExceptions,
+//       maxSize: AppConf.logFile.maxSize,
+//       maxFiles: AppConf.logFile.maxFiles,
+//       level: "info"
+//     })
+//   ]
+// });
 
-container.add("db", createLoggerOptions("db"));
+// container.add("db", createLoggerOptions("db"));
 container.add("email", createLoggerOptions("email"));
 
-exports.httpLog = container.get("http");
-exports.appLog = container.get("app");
-exports.dbLog = container.get("db");
+// exports.httpLog = container.get("http");
+// exports.appLog = container.get("app");
+// exports.dbLog = container.get("db");
 exports.emailLog = container.get("email");
 
-exports.httpStream = {
-  write: (message) => {
-    httpLog.info(message);
-  }
-};
+// exports.httpStream = {
+//   write: (message) => {
+//     httpLog.info(message);
+//   }
+// };
