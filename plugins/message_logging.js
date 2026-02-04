@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { Op } = require("sequelize");
 const { emailLog } = require("./logging/winston");
+const { decodeMimeWord } = require("mimelib");
 
 /**
  * https://haraka.github.io/core/Plugins/
@@ -36,8 +37,8 @@ exports.hook_data_post = async function (next, connection) {
     const recipients = txn?.rcpt_to.map((r) => formatAddress(r.address()));
     const headers = txn?.header;
     const body = txn?.body;
-    const subject = headers.get("subject")?.trim();
-
+    // Get Email Subject and convert MIME string to UTF-8
+    const subject = decodeMimeWord(headers.get("subject")?.trim());
     if (!harakaId) return next();
 
     // Auth validate
@@ -46,8 +47,8 @@ exports.hook_data_post = async function (next, connection) {
     const account = await EmailAccount.findOne({ where: { username: accountRequest } });
     if (!account) throw new Error(`Not found any account by username: ${accountRequest}`);
     this.accountRequest = accountRequest;
-    emailLog.info(`Account request: ${accountRequest}`);
-    emailLog.info(`harakaId: ${harakaId}`);
+    emailLog.info(`Account Request: ${accountRequest}`);
+    emailLog.info(`Haraka ID: ${harakaId}`);
     emailLog.info(`Have email from ${from} to ${JSON.stringify(recipients)}`);
     emailLog.info(`Subject: ${subject}`);
     emailLog.info(`---------------------------------------------------------------------------------`);
