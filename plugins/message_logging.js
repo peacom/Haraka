@@ -1,7 +1,6 @@
 const { EMAIL_STATUS } = require("./db/models/email/email-transaction.model");
 const fs = require("fs");
 const path = require("path");
-const { Op } = require("sequelize");
 const { emailLog } = require("./logging/winston");
 const { decodeMimeWord } = require("mimelib");
 
@@ -30,11 +29,11 @@ exports.hook_data = function (next, connection) {
 
 exports.hook_data_post = async function (next, connection) {
   try {
-    const { EmailAccount, EmailTransaction } = server.notes.db;
+    const { EmailAccount, EmailTransaction, EmailDeliveryStatus } = server.notes.db;
     const txn = connection.transaction;
     const harakaId = txn?.uuid;
     const from = formatAddress(txn?.mail_from.address());
-    const recipients = txn?.rcpt_to.map((r) => formatAddress(r.address()));
+    const recipients = filterDuplicate(txn?.rcpt_to.map((r) => formatAddress(r.address())));
     const headers = txn?.header;
     const body = txn?.body;
 
@@ -56,23 +55,11 @@ exports.hook_data_post = async function (next, connection) {
     emailLog.info(`Subject: ${subject}`);
     emailLog.info(`---------------------------------------------------------------------------------`);
 
-    // const attachments = [];
-    // for (const part of body.children) {
-    //   if (part.attachment_stream) {
-    //     const filename = part.disposition_params?.filename || `file-${Date.now()}`;
-    //     const savePath = path.join(__dirname, "../mail-attachments");
-    //     if (!fs.existsSync(savePath)) fs.mkdirSync(savePath, { recursive: true });
-    //     const filePath = path.resolve(savePath, filename);
-    //     const writeStream = fs.createWriteStream(filePath);
-    //     // TODO saving attachment
-    //     // part.attachment_stream.pipe(writeStream, { end: true });
-    //     // attachments.push({ filename: part.disposition_params?.filename, mime: part.ctype, size: part.body?.length || 0 });
-    //   }
-    // }
+    // TODO: Setup Queue processAttachments(body)
 
     // Create mail request
     for (const recipient of recipients) {
-      await EmailTransaction.create({
+      const emailTxn = await EmailTransaction.create({
         harakaId,
         emailAccountId: account.id,
         clientIP: connection.remote.ip,
@@ -84,8 +71,16 @@ exports.hook_data_post = async function (next, connection) {
         content: body.bodytext?.trim(),
         isHtml: body.is_html,
         status: EMAIL_STATUS.PENDING,
+        createdDate: new Date(),
+        lastUpdated: new Date()
+      });
+
+      await EmailDeliveryStatus.create({
+        emailTxnId: emailTxn.id,
+        status: emailTxn.status,
         statusMessage: "Pending",
-        createdDate: new Date()
+        updatedDate: new Date(),
+        lastUpdated: new Date()
       });
     }
     next();
@@ -95,29 +90,27 @@ exports.hook_data_post = async function (next, connection) {
 };
 
 exports.forward_success = async function (payload) {
-  const { EmailProvider } = server.notes.db;
+  const { EmailProvider, EmailTransaction } = server.notes.db;
   const { harakaId, response, providerHost, recipients } = payload;
   const messageId = response[0].split(" ").at(-1);
-  const recipientAddresses = recipients.map((rcp) => formatAddress(rcp.original));
+  const recipientAddresses = filterDuplicate(recipients.map((rcp) => formatAddress(rcp.original)));
   emailLog.info(`forward_success: Email Provider Txn ID - <${messageId}>`);
   emailLog.info(`Haraka ID: ${harakaId}`);
   emailLog.info(`Provider Host: ${providerHost}`);
   emailLog.info(`Recipients: ${JSON.stringify(recipientAddresses)}`);
   emailLog.info(`---------------------------------------------------------------------------------`);
 
-  for (const address of recipientAddresses) {
-    await EmailProvider.upsert({
-      emailTransactionId: harakaId,
-      providerEmailTransactionId: messageId,
-      recipient: address,
-      host: providerHost,
-      lastUpdated: new Date()
-    });
+  try {
+    for (const address of recipientAddresses) {
+      const emailTxn = await EmailTransaction.findOne({ where: { harakaId, to: address } });
+      if (emailTxn) {
+        await EmailProvider.upsert({ emailTxnId: emailTxn.id, providerEmailTxnId: messageId, host: providerHost, createdDate: new Date() });
+        await updateEmailTxnStatus(emailTxn.id, EMAIL_STATUS.SENT, "Sent");
+      }
+    }
+  } catch (err) {
+    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then();
   }
-
-  updateMessageStatus(harakaId, EMAIL_STATUS.SUCCESS, "Delivered").catch((err) =>
-    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then()
-  );
 };
 
 exports.bounce_handle = async function (next, hook_data) {
@@ -132,10 +125,12 @@ exports.bounce_handle = async function (next, hook_data) {
   emailLog.error(`Bounce Message: ${JSON.stringify(statusMessage)}`);
   emailLog.error(`---------------------------------------------------------------------------------`);
 
-  EmailTransaction.update(
-    { status: EMAIL_STATUS.BOUNCE, statusMessage: rcpt_to[0].dsn_smtp_response, lastUpdated: new Date() },
-    { where: { harakaId, to: recipient } }
-  ).catch((err) => server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then());
+  const emailTxn = await EmailTransaction.findOne({ where: { harakaId, to: recipient } });
+  if (!emailTxn) next();
+
+  updateEmailTxnStatus(emailTxn.id, EMAIL_STATUS.BOUNCE, statusMessage).catch((err) =>
+    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then()
+  );
   next();
 };
 
@@ -150,8 +145,7 @@ exports.error_handle = async function (next, connection, params) {
     const transactions = await EmailTransaction.count({ where: { harakaId } });
 
     if (!transactions) {
-      this.logerror(`Not found any transaction by id ${harakaId}`);
-      emailLog.error(`Error Message: Not found any transaction by id ${harakaId}`);
+      emailLog.error(`Not found any transaction by id ${harakaId}`);
       emailLog.error(`---------------------------------------------------------------------------------`);
       return next();
     }
@@ -159,23 +153,37 @@ exports.error_handle = async function (next, connection, params) {
     emailLog.error(`Error Message: ${errorMessage}`);
     emailLog.error(`---------------------------------------------------------------------------------`);
 
-    await updateMessageStatus(harakaId, EMAIL_STATUS.FAIL, errorMessage);
+    await EmailTransaction.update({ status: EMAIL_STATUS.FAIL, statusMessage: errorMessage }, { where: { harakaId } });
     server.notes.sendTelegramErrorMessage(new Error(errorMessage), `${this.accountRequest} - message_logging`).then();
     next();
   } catch (err) {
-    this.logerror(err);
     emailLog.error(err);
     server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then();
     next();
   }
 };
 
-async function updateMessageStatus(harakaId, statusCode, statusMessage) {
-  const { EmailTransaction } = server.notes.db;
-  await EmailTransaction.update(
-    { status: statusCode, statusMessage, lastUpdated: new Date() },
-    { where: { harakaId, status: { [Op.ne]: EMAIL_STATUS.BOUNCE } } }
-  );
+async function updateEmailTxnStatus(emailTxnId, statusCode, statusMessage, extraData = "") {
+  const { EmailDeliveryStatus, EmailTransaction } = server.notes.db;
+  const currentDate = new Date();
+  await EmailDeliveryStatus.upsert({ emailTxnId, status: statusCode, statusMessage, extraData, updatedDate: currentDate, lastUpdated: currentDate });
+  await EmailTransaction.update({ status: statusCode, lastUpdated: currentDate }, { where: { id: emailTxnId } });
+}
+
+async function processAttachments(body) {
+  const attachments = [];
+  for (const part of body.children) {
+    if (part.attachment_stream) {
+      const filename = part.disposition_params?.filename || `file-${Date.now()}`;
+      const savePath = path.join(__dirname, "../mail-attachments");
+      if (!fs.existsSync(savePath)) fs.mkdirSync(savePath, { recursive: true });
+      const filePath = path.resolve(savePath, filename);
+      const writeStream = fs.createWriteStream(filePath);
+      // TODO saving attachment
+      // part.attachment_stream.pipe(writeStream, { end: true });
+      // attachments.push({ filename: part.disposition_params?.filename, mime: part.ctype, size: part.body?.length || 0 });
+    }
+  }
 }
 
 function formatAddress(rawAddress) {
@@ -189,4 +197,8 @@ function formatSubject(rawSubject) {
     .split("\n")
     .map((t) => decodeMimeWord(t.trim()))
     .join("");
+}
+
+function filterDuplicate(array) {
+  return [...new Set(array)];
 }

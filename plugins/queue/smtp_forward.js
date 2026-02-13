@@ -7,7 +7,6 @@
 const url = require("node:url");
 
 const smtp_client_mod = require("./smtp_client");
-const { EMAIL_STATUS } = require("../db/models/email/email-transaction.model");
 
 exports.register = function () {
   this.load_errs = [];
