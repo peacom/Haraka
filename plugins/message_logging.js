@@ -109,7 +109,7 @@ exports.forward_success = async function (payload) {
       }
     }
   } catch (err) {
-    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then();
+    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - ${harakaId} - message_logging`).then();
   }
 };
 
@@ -129,7 +129,7 @@ exports.bounce_handle = async function (next, hook_data) {
   if (!emailTxn) next();
 
   updateEmailTxnStatus(emailTxn.id, EMAIL_STATUS.BOUNCE, statusMessage).catch((err) =>
-    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then()
+    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - ${harakaId} - message_logging`).then()
   );
   next();
 };
@@ -154,11 +154,11 @@ exports.error_handle = async function (next, connection, params) {
     emailLog.error(`---------------------------------------------------------------------------------`);
 
     await EmailTransaction.update({ status: EMAIL_STATUS.FAIL, statusMessage: errorMessage }, { where: { harakaId } });
-    server.notes.sendTelegramErrorMessage(new Error(errorMessage), `${this.accountRequest} - message_logging`).then();
+    server.notes.sendTelegramErrorMessage(new Error(errorMessage), `${this.accountRequest} - ${harakaId} - message_logging`).then();
     next();
   } catch (err) {
     emailLog.error(err);
-    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - message_logging`).then();
+    server.notes.sendTelegramErrorMessage(err, `${this.accountRequest} - ${harakaId} - message_logging`).then();
     next();
   }
 };
