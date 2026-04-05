@@ -1,0 +1,56 @@
+; host to connect to
+; host=localhost
+;
+; port to connect to
+; port=2555
+;
+; uncomment to enable TLS to the backend SMTP server
+;enable_tls=true
+;
+; for messages that have multiple RCPT, send a separate message for each RCPT
+; when forwarding.
+;one_message_per_rcpt=true
+;
+; uncomment to use smtp client authorization
+;auth_type=plain
+;auth_user=
+;auth_pass=
+
+; should outbound messages be delivered by smtp_forward?
+; see #1472 and #2795
+; enable_outbound=false
+
+; When domain_selector is set to rcpt_to (the default), 
+; more specific routes are only honored for SMTP connections with a single recipient or SMTP connections where every recipient host is identical.
+; When domain_selector is set to mail_from, the domain of the MAIL FROM address is used.
+domain_selector=mail_from
+
+; default SMTP host
+host=
+port=587
+auth_type=login
+auth_user=
+auth_pass=
+enable_outbound=true
+check_recipient=false
+enable_tls=true
+
+; [domain1.com]
+; host=
+; port=587
+; auth_type=login
+; auth_user=
+; auth_pass=
+; enable_outbound=true
+; check_recipient=false
+; enable_tls=true
+
+; [domain2.com]
+; host=
+; port=465
+; auth_type=login
+; auth_user=
+; auth_pass=
+; enable_outbound=true
+; check_recipient=false
+; enable_tls=true

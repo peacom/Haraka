@@ -1,4 +1,5 @@
 .DS_Store
+.vscode
 /node_modules
 http/node_modules
 .coveralls.yml
@@ -22,6 +23,13 @@ coverage
 /config/smtp.json
 /config/tls_cert.pem
 /config/tls_key.pem
+/config/smtp_forward.ini
+/config/auth_flat_file.ini
+/config/system_config.ini
+/ssl
 /queue
 CLAUDE.md
 GEMINI.md
+/mail-attachments
+/logs
+yarn.lock

@@ -18,7 +18,7 @@ const LOGIN_STRING2 = 'UGFzc3dvcmQ6' //Password: base64 coded
 
 exports.hook_capabilities = (next, connection) => {
     // Don't offer AUTH capabilities unless session is encrypted
-    if (!connection.tls.enabled) return next()
+    // if (!connection.tls.enabled) return next();
 
     const methods = ['PLAIN', 'LOGIN', 'CRAM-MD5']
     connection.capabilities.push(`AUTH ${methods.join(' ')}`)

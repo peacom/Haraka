@@ -1,4 +1,4 @@
-'use strict'
+"use strict";
 // Forward to an SMTP server
 // Opens the connection to the ongoing SMTP server at queue time
 // and passes back any errors seen on the ongoing server to the
@@ -131,6 +131,9 @@ exports.set_queue = function (connection, queue_wanted, domain) {
         if (!next_hop) return true
         if (next_hop === dst_host) return true
     }
+    txn.results.add(this, { pass: "rcpt_to.split" });
+    return next(DENYSOFT, "Split transaction, retry soon");
+  }
 
     // multiple recipients with different forward host, soft deny
     return false
@@ -161,6 +164,8 @@ exports.check_recipient = function (next, connection, params) {
         txn.results.add(this, { pass: 'rcpt_to.split' })
         return next(DENYSOFT, 'Split transaction, retry soon')
     }
+  });
+};
 
     // the MAIL FROM domain is not local and neither is the RCPT TO
     // Another RCPT plugin may vouch for this recipient.
@@ -291,6 +296,15 @@ exports.queue_forward = function (next, connection) {
                 smtp_client.send_command('RSET')
                 return
             }
+            
+            // Emit event when forward success
+            server.notes.eventBus?.emit("smtp_forward_success", {
+              harakaId: txn.uuid,
+              recipients: txn.rcpt_to,
+              response: smtp_client.response,
+              providerHost: smtp_client.host
+            });
+          
             smtp_client.call_next(OK, smtp_client.response)
             smtp_client.release()
         })
@@ -347,11 +361,49 @@ exports.get_mx = function (next, hmail, domain) {
 
     const mx_opts = ['auth_type', 'auth_user', 'auth_pass', 'bind', 'bind_helo', 'using_lmtp']
 
-    const mx = {
-        priority: 0,
-        exchange: cfg.host || this.cfg.main.host,
-        port: cfg.port || this.cfg.main.port || 25,
-    }
+    smtp_client.on("bad_code", (code, msg) => {
+      if (dead_sender() || !txn) return;
+      smtp_client.call_next(code && code[0] === "5" ? DENY : DENYSOFT, msg);
+      smtp_client.release();
+    });
+  });
+};
+
+exports.get_mx_next_hop = (next_hop) => {
+  // queue.wants && queue.next_hop are mechanisms for fine-grained MX routing.
+  // Plugins can specify a queue to perform the delivery as well as a route. A
+  // plugin that uses this is qmail-deliverable, which can direct email delivery
+  // via smtp_forward, outbound (SMTP), and outbound (LMTP).
+  const dest = new url.URL(next_hop);
+  const mx = { priority: 0, port: dest.port || (dest.protocol === "lmtp:" ? 24 : 25), exchange: dest.hostname };
+  if (dest.protocol === "lmtp:") mx.using_lmtp = true;
+  if (dest.auth) {
+    mx.auth_type = "plain";
+    mx.auth_user = dest.auth.split(":")[0];
+    mx.auth_pass = dest.auth.split(":")[1];
+  }
+  return mx;
+};
+
+exports.get_mx = function (next, hmail, domain) {
+  const qw = hmail.todo.notes.get("queue.wants");
+  if (qw && qw !== "smtp_forward") return next();
+
+  if (qw === "smtp_forward" && hmail.todo.notes.get("queue.next_hop")) {
+    return next(OK, this.get_mx_next_hop(hmail.todo.notes.get("queue.next_hop")));
+  }
+
+  const dom = this.cfg.main.domain_selector === "mail_from" ? hmail.todo.mail_from.host.toLowerCase() : domain.toLowerCase();
+  const cfg = this.cfg[dom];
+
+  if (cfg === undefined) {
+    this.logdebug(`using DNS MX for: ${domain}`);
+    return next();
+  }
+
+  const mx_opts = ["auth_type", "auth_user", "auth_pass", "bind", "bind_helo", "using_lmtp"];
+
+  const mx = { priority: 0, exchange: cfg.host || this.cfg.main.host, port: cfg.port || this.cfg.main.port || 25 };
 
     // apply auth/mx options
     mx_opts.forEach((o) => {
