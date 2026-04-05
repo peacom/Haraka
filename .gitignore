@@ -28,6 +28,8 @@ coverage
 /config/system_config.ini
 /ssl
 /queue
+CLAUDE.md
+GEMINI.md
 /mail-attachments
 /logs
 yarn.lock

@@ -1,8 +1,8 @@
 // Auth against a flat file
 
 exports.register = function () {
-  this.inherits("auth/auth_base");
-  this.load_flat_ini();
+    this.inherits('auth/auth_base')
+    this.load_flat_ini()
 
   if (this.cfg.core.constrain_sender) {
     this.register_hook("mail", "constrain_sender");
