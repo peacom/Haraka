@@ -3,7 +3,8 @@ exports.AppConf = {
   fileUploadDir: "./uploads/",
   emailFileUploadDir: "./public/uploads/",
   logFile: {
-    folder: "logs/haraka",
+    // folder: "logs/haraka",
+    folder: "/usr/projects/pm2/logs/haraka",
     errorFile: "error-%DATE%.log",
     datePattern: "YYYY-MM-DD",
     zippedArchive: false,
