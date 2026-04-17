@@ -10,47 +10,47 @@
 // is enabled and the sending domain is local, the receipt is OK.
 
 exports.register = function () {
-    this.inherits('rcpt_to.host_list_base')
+  this.inherits('rcpt_to.host_list_base')
 
-    this.load_host_list()
-    this.load_host_list_regex()
+  this.load_host_list()
+  this.load_host_list_regex()
 }
 
 exports.hook_rcpt = function (next, connection, params) {
-    const txn = connection?.transaction
-    if (!txn) return
+  const txn = connection?.transaction
+  if (!txn) return
 
-    const rcpt = params[0]
+  const rcpt = params[0]
 
-    // Check for RCPT TO without an @ first - ignore those here
-    if (!rcpt.host) {
-        txn.results.add(this, { fail: 'rcpt!domain' })
-        return next()
-    }
-
-    connection.logdebug(this, `Checking if ${rcpt} host is in host_list`)
-
-    const domain = rcpt.host.toLowerCase()
-
-    if (this.in_host_list(domain, connection)) {
-        txn.results.add(this, { pass: 'rcpt_to' })
-        return next(OK)
-    }
-
-    if (this.in_host_regex(domain, connection)) {
-        txn.results.add(this, { pass: 'rcpt_to' })
-        return next(OK)
-    }
-
-    // in this case, a client with relaying privileges is sending FROM a local
-    // domain. For them, any RCPT address is accepted.
-    if (connection.relaying && txn.notes.local_sender) {
-        txn.results.add(this, { pass: 'relaying local_sender' })
-        return next(OK)
-    }
-
-    // the MAIL FROM domain is not local and neither is the RCPT TO
-    // Another RCPT plugin may yet vouch for this recipient.
-    txn.results.add(this, { msg: 'rcpt!local' })
+  // Check for RCPT TO without an @ first - ignore those here
+  if (!rcpt.host) {
+    txn.results.add(this, { fail: 'rcpt!domain' })
     return next()
+  }
+
+  connection.logdebug(this, `Checking if ${rcpt} host is in host_list`)
+
+  const domain = rcpt.host.toLowerCase()
+
+  if (this.in_host_list(domain, connection)) {
+    txn.results.add(this, { pass: 'rcpt_to' })
+    return next(OK)
+  }
+
+  if (this.in_host_regex(domain, connection)) {
+    txn.results.add(this, { pass: 'rcpt_to' })
+    return next(OK)
+  }
+
+  // in this case, a client with relaying privileges is sending FROM a local
+  // domain. For them, any RCPT address is accepted.
+  if (connection.relaying && txn.notes.local_sender) {
+    txn.results.add(this, { pass: 'relaying local_sender' })
+    return next(OK)
+  }
+
+  // the MAIL FROM domain is not local and neither is the RCPT TO
+  // Another RCPT plugin may yet vouch for this recipient.
+  txn.results.add(this, { msg: 'rcpt!local' })
+  return next()
 }

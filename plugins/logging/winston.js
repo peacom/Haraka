@@ -1,33 +1,33 @@
-"use strict";
+'use strict'
 
-const winston = require("winston");
-const { AppConf } = require("./application");
-const EventEmitter = require("events");
+const winston = require('winston')
+const { AppConf } = require('./application')
+const EventEmitter = require('events')
 
-EventEmitter.defaultMaxListeners = 20;
+EventEmitter.defaultMaxListeners = 20
 
-require("winston-daily-rotate-file");
+require('winston-daily-rotate-file')
 
-const { format } = winston;
-const { combine, label, timestamp, printf } = format;
+const { format } = winston
+const { combine, label, timestamp, printf } = format
 
 const filter = format((info) => {
-  const { message, stack } = info;
+  const { message, stack } = info
   if (stack) {
-    return { ...info, message: JSON.stringify(message), stack };
+    return { ...info, message: JSON.stringify(message), stack }
   }
 
-  return { ...info, message: typeof info.message === "object" ? JSON.stringify(info.message) : info.message };
-});
+  return { ...info, message: typeof info.message === 'object' ? JSON.stringify(info.message) : info.message }
+})
 
 const myFormat = printf(({ level, message, label: _label, timestamp: _timestamp, stack }) => {
-  return `[${_timestamp}] [${_label.toUpperCase()}] [${level.toUpperCase()}]: ${message}${stack ? `. ${stack}` : ""}`;
-});
+  return `[${_timestamp}] [${_label.toUpperCase()}] [${level.toUpperCase()}]: ${message}${stack ? `. ${stack}` : ''}`
+})
 
-const container = new winston.Container();
+const container = new winston.Container()
 
 function createFormat(_label) {
-  return combine(timestamp({ format: "YYYY-MM-DD HH:mm:ss.SSS" }), label({ label: _label }), filter(), myFormat);
+  return combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }), label({ label: _label }), filter(), myFormat)
 }
 
 function createLoggerOptions(loggerName) {
@@ -41,16 +41,24 @@ function createLoggerOptions(loggerName) {
         handleExceptions: AppConf.logFile.handleExceptions,
         maxSize: AppConf.logFile.maxSize,
         maxFiles: AppConf.logFile.maxFiles,
-        level: "info"
-      })
-    ]
-  };
-
-  if (process.env.NODE_ENV !== "production") {
-    rs.transports.push(new winston.transports.Console({ level: "debug", handleExceptions: true, json: false, colorize: true, format: myFormat }));
+        level: 'info',
+      }),
+    ],
   }
 
-  return rs;
+  if (process.env.NODE_ENV !== 'production') {
+    rs.transports.push(
+      new winston.transports.Console({
+        level: 'debug',
+        handleExceptions: true,
+        json: false,
+        colorize: true,
+        format: myFormat,
+      }),
+    )
+  }
+
+  return rs
 }
 
 // container.add("database", createLoggerOptions("database"));
@@ -73,12 +81,12 @@ function createLoggerOptions(loggerName) {
 // });
 
 // container.add("db", createLoggerOptions("db"));
-container.add("email", createLoggerOptions("email"));
+container.add('email', createLoggerOptions('email'))
 
 // exports.httpLog = container.get("http");
 // exports.appLog = container.get("app");
 // exports.dbLog = container.get("db");
-exports.emailLog = container.get("email");
+exports.emailLog = container.get('email')
 
 // exports.httpStream = {
 //   write: (message) => {
