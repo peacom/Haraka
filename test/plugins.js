@@ -43,188 +43,179 @@ From: https://github.com/haraka/Haraka/pull/1278#issuecomment-172134064
 */
 
 describe('plugin', () => {
-    it('new Plugin() object', () => {
-        const pi = new plugin.Plugin(piName)
-        assert.ok(pi)
+  it('new Plugin() object', () => {
+    const pi = new plugin.Plugin(piName)
+    assert.ok(pi)
+  })
+
+  describe('get_timeout', () => {
+    const toPath = path.resolve('config', `${piName}.timeout`)
+    it('0s', (t, done) => {
+      fs.writeFile(toPath, '0', () => {
+        this.plugin = new plugin.Plugin(piName)
+        assert.equal(this.plugin.timeout, 0)
+        fs.unlink(toPath, done)
+      })
     })
 
-    describe('get_timeout', () => {
-        const toPath = path.resolve('config', `${piName}.timeout`)
-        it('0s', (t, done) => {
-            fs.writeFile(toPath, '0', () => {
-                this.plugin = new plugin.Plugin(piName)
-                assert.equal(this.plugin.timeout, 0)
-                fs.unlink(toPath, done)
-            })
-        })
-
-        it('3s', (t, done) => {
-            fs.writeFile(toPath, '3', () => {
-                this.plugin = new plugin.Plugin(piName)
-                assert.equal(this.plugin.timeout, 3)
-                fs.unlink(toPath, done)
-            })
-        })
-
-        it('60s', (t, done) => {
-            fs.writeFile(toPath, '60', () => {
-                this.plugin = new plugin.Plugin(piName)
-                assert.equal(this.plugin.timeout, 60)
-                fs.unlink(toPath, done)
-            })
-        })
-
-        it('30s default (overrides NaN)', (t, done) => {
-            fs.writeFile(toPath, 'apple', () => {
-                this.plugin = new plugin.Plugin(piName)
-                assert.equal(this.plugin.timeout, 30)
-                fs.unlink(toPath, done)
-            })
-        })
+    it('3s', (t, done) => {
+      fs.writeFile(toPath, '3', () => {
+        this.plugin = new plugin.Plugin(piName)
+        assert.equal(this.plugin.timeout, 3)
+        fs.unlink(toPath, done)
+      })
     })
 
-    describe('plugin_paths', () => {
-        beforeEach(() => {
-            delete process.env.HARAKA
-        })
-
-        afterEach(() => {
-            delete process.env.HARAKA
-        })
-
-        it('CORE plugin: (tls)', () => {
-            const p = new plugin.Plugin('tls')
-
-            assert.equal(p.plugin_path, path.resolve(__dirname, '..', 'plugins', 'tls.js'))
-        })
-
-        it('INSTALLED override: (tls)', () => {
-            process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
-
-            const p = new plugin.Plugin('tls')
-
-            assert.equal(p.plugin_path, path.resolve(__dirname, 'installation', 'plugins', 'tls.js'))
-        })
-
-        it('INSTALLED node_modules package plugin: (test-plugin)', () => {
-            process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
-
-            const p = new plugin.Plugin('test-plugin')
-
-            assert.equal(
-                p.plugin_path,
-                path.resolve(__dirname, 'installation', 'node_modules', 'test-plugin', 'package.json'),
-            )
-            assert.ok(p.hasPackageJson)
-            try {
-                p._compile()
-                assert.ok(true, 'compiles OK')
-            } catch (e) {
-                console.error(e.stack)
-                assert.ok(false, 'compiles OK')
-            }
-        })
-
-        it('CORE package plugin: redis', () => {
-            const p = new plugin.Plugin('haraka-plugin-redis')
-
-            assert.equal(
-                p.plugin_path,
-                path.resolve(__dirname, '..', 'node_modules', 'haraka-plugin-redis', 'package.json'),
-            )
-            assert.ok(p.hasPackageJson)
-        })
-
-        it('plugins overrides node_modules', () => {
-            process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
-
-            const p = new plugin.Plugin('load_first')
-
-            assert.equal(p.plugin_path, path.resolve(__dirname, 'installation', 'plugins', 'load_first.js'))
-            try {
-                p._compile()
-                assert.ok(true, 'compiles OK')
-            } catch (e) {
-                console.error(e.stack)
-                assert.ok(false, 'compiles OK')
-            }
-            assert.ok(p.loaded_first)
-        })
-
-        it('INSTALLED plugins folder plugin: (folder_plugin)', () => {
-            process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
-
-            const p = new plugin.Plugin('folder_plugin')
-
-            assert.equal(
-                p.plugin_path,
-                path.resolve(__dirname, 'installation', 'plugins', 'folder_plugin', 'package.json'),
-            )
-            assert.ok(p.hasPackageJson)
-            try {
-                p._compile()
-                assert.ok(true, 'compiles OK')
-            } catch (e) {
-                console.error(e.stack)
-                assert.ok(false, 'compiles OK')
-            }
-        })
-
-        it('Inheritance: (inherits)', () => {
-            process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
-
-            const p = new plugin.Plugin('inherits')
-
-            assert.equal(p.plugin_path, path.resolve(__dirname, 'installation', 'plugins', 'inherits.js'))
-            try {
-                p._compile()
-                assert.ok(true, 'compiles OK')
-            } catch (e) {
-                console.error(e.stack)
-                assert.ok(false, 'compiles OK')
-            }
-            p.register()
-            assert.ok(p.base.base_plugin)
-        })
+    it('60s', (t, done) => {
+      fs.writeFile(toPath, '60', () => {
+        this.plugin = new plugin.Plugin(piName)
+        assert.equal(this.plugin.timeout, 60)
+        fs.unlink(toPath, done)
+      })
     })
 
-    describe('plugin_config', () => {
-        beforeEach(() => {
-            delete process.env.HARAKA
-        })
-
-        afterEach(() => {
-            delete process.env.HARAKA
-        })
-
-        it('CORE plugin: (tls)', () => {
-            const p = new plugin.Plugin('tls')
-
-            assert.equal(p.config.root_path, path.resolve(__dirname, '..', 'config'))
-            assert.equal(p.config.overrides_path, undefined)
-        })
-
-        it('INSTALLED override: (tls)', () => {
-            process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
-
-            const p = new plugin.Plugin('tls')
-
-            assert.equal(p.config.root_path, path.resolve(__dirname, '..', 'config'))
-            assert.equal(p.config.overrides_path, path.resolve(__dirname, 'installation', 'config'))
-            const tls_ini = p.config.get('tls.ini')
-            assert.equal(tls_ini.main.ciphers, 'test')
-        })
-
-        it('INSTALLED node_modules package plugin: (test-plugin)', () => {
-            process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
-
-            const p = new plugin.Plugin('test-plugin')
-
-            assert.equal(
-                p.config.root_path,
-                path.resolve(__dirname, 'installation', 'node_modules', 'test-plugin', 'config'),
-            )
-            assert.equal(p.config.overrides_path, path.resolve(__dirname, 'installation', 'config'))
-        })
+    it('30s default (overrides NaN)', (t, done) => {
+      fs.writeFile(toPath, 'apple', () => {
+        this.plugin = new plugin.Plugin(piName)
+        assert.equal(this.plugin.timeout, 30)
+        fs.unlink(toPath, done)
+      })
     })
+  })
+
+  describe('plugin_paths', () => {
+    beforeEach(() => {
+      delete process.env.HARAKA
+    })
+
+    afterEach(() => {
+      delete process.env.HARAKA
+    })
+
+    it('CORE plugin: (tls)', () => {
+      const p = new plugin.Plugin('tls')
+
+      assert.equal(p.plugin_path, path.resolve(__dirname, '..', 'plugins', 'tls.js'))
+    })
+
+    it('INSTALLED override: (tls)', () => {
+      process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
+
+      const p = new plugin.Plugin('tls')
+
+      assert.equal(p.plugin_path, path.resolve(__dirname, 'installation', 'plugins', 'tls.js'))
+    })
+
+    it('INSTALLED node_modules package plugin: (test-plugin)', () => {
+      process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
+
+      const p = new plugin.Plugin('test-plugin')
+
+      assert.equal(
+        p.plugin_path,
+        path.resolve(__dirname, 'installation', 'node_modules', 'test-plugin', 'package.json'),
+      )
+      assert.ok(p.hasPackageJson)
+      try {
+        p._compile()
+        assert.ok(true, 'compiles OK')
+      } catch (e) {
+        console.error(e.stack)
+        assert.ok(false, 'compiles OK')
+      }
+    })
+
+    it('CORE package plugin: redis', () => {
+      const p = new plugin.Plugin('haraka-plugin-redis')
+
+      assert.equal(p.plugin_path, path.resolve(__dirname, '..', 'node_modules', 'haraka-plugin-redis', 'package.json'))
+      assert.ok(p.hasPackageJson)
+    })
+
+    it('plugins overrides node_modules', () => {
+      process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
+
+      const p = new plugin.Plugin('load_first')
+
+      assert.equal(p.plugin_path, path.resolve(__dirname, 'installation', 'plugins', 'load_first.js'))
+      try {
+        p._compile()
+        assert.ok(true, 'compiles OK')
+      } catch (e) {
+        console.error(e.stack)
+        assert.ok(false, 'compiles OK')
+      }
+      assert.ok(p.loaded_first)
+    })
+
+    it('INSTALLED plugins folder plugin: (folder_plugin)', () => {
+      process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
+
+      const p = new plugin.Plugin('folder_plugin')
+
+      assert.equal(p.plugin_path, path.resolve(__dirname, 'installation', 'plugins', 'folder_plugin', 'package.json'))
+      assert.ok(p.hasPackageJson)
+      try {
+        p._compile()
+        assert.ok(true, 'compiles OK')
+      } catch (e) {
+        console.error(e.stack)
+        assert.ok(false, 'compiles OK')
+      }
+    })
+
+    it('Inheritance: (inherits)', () => {
+      process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
+
+      const p = new plugin.Plugin('inherits')
+
+      assert.equal(p.plugin_path, path.resolve(__dirname, 'installation', 'plugins', 'inherits.js'))
+      try {
+        p._compile()
+        assert.ok(true, 'compiles OK')
+      } catch (e) {
+        console.error(e.stack)
+        assert.ok(false, 'compiles OK')
+      }
+      p.register()
+      assert.ok(p.base.base_plugin)
+    })
+  })
+
+  describe('plugin_config', () => {
+    beforeEach(() => {
+      delete process.env.HARAKA
+    })
+
+    afterEach(() => {
+      delete process.env.HARAKA
+    })
+
+    it('CORE plugin: (tls)', () => {
+      const p = new plugin.Plugin('tls')
+
+      assert.equal(p.config.root_path, path.resolve(__dirname, '..', 'config'))
+      assert.equal(p.config.overrides_path, undefined)
+    })
+
+    it('INSTALLED override: (tls)', () => {
+      process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
+
+      const p = new plugin.Plugin('tls')
+
+      assert.equal(p.config.root_path, path.resolve(__dirname, '..', 'config'))
+      assert.equal(p.config.overrides_path, path.resolve(__dirname, 'installation', 'config'))
+      const tls_ini = p.config.get('tls.ini')
+      assert.equal(tls_ini.main.ciphers, 'test')
+    })
+
+    it('INSTALLED node_modules package plugin: (test-plugin)', () => {
+      process.env.HARAKA = path.resolve(__dirname, '..', 'test', 'installation')
+
+      const p = new plugin.Plugin('test-plugin')
+
+      assert.equal(p.config.root_path, path.resolve(__dirname, 'installation', 'node_modules', 'test-plugin', 'config'))
+      assert.equal(p.config.overrides_path, path.resolve(__dirname, 'installation', 'config'))
+    })
+  })
 })

@@ -1,4 +1,4 @@
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes, Model } = require('sequelize')
 
 class EmailSummaryDaily extends Model {
   static init(sequelize, opts) {
@@ -13,11 +13,11 @@ class EmailSummaryDaily extends Model {
         bounce: { type: DataTypes.INTEGER },
         lastUpdated: { type: DataTypes.DATE },
         fromTime: { type: DataTypes.DATE },
-        toTime: { type: DataTypes.DATE }
+        toTime: { type: DataTypes.DATE },
       },
-      { tableName: "email_summary_daily", modelName: "emailSummaryDaily", timestamps: false, sequelize, ...opts }
-    );
+      { tableName: 'email_summary_daily', modelName: 'emailSummaryDaily', timestamps: false, sequelize, ...opts },
+    )
   }
 }
 
-module.exports = { EmailSummaryDaily };
+module.exports = { EmailSummaryDaily }
