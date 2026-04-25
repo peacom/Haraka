@@ -288,7 +288,7 @@ exports.queue_forward = function (next, connection) {
         smtp_client.send_command('RSET')
         return
       }
-     
+
       smtp_client.call_next(OK, smtp_client.response)
       smtp_client.release()
     })

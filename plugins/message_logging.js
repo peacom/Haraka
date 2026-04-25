@@ -14,7 +14,6 @@ exports.register = function () {
   this.register_hook('queue_ok', 'my_queue_outbound', 10)
 }
 
-
 exports.my_queue_outbound = async function (next, connection, params) {
   emailLog.info(`start process my_queue_outbound`)
   const { EmailTransaction, EmailPartner, EmailAccount } = server.notes.db
@@ -44,7 +43,7 @@ exports.my_queue_outbound = async function (next, connection, params) {
     await EmailTransaction.bulkCreate(transactions, {
       include: [{ model: EmailPartner, as: 'emailPartner' }],
     })
-    
+
     emailLog.info(`end process my_queue_outbound`)
     return next()
   } catch (err) {
