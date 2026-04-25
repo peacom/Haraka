@@ -56,7 +56,7 @@ exports.my_queue_outbound = async function (next, connection, params) {
 exports.error_handle = async function (next, connection, params) {
   emailLog.info(`start process error_handle`)
   emailLog.info(`error_handle >>>: ${params}`)
-  const [statusCode] = params.split(',')
+  const [statusCode] = params
   if (Number(statusCode) === 902) return next()
   const { EmailTransaction, EmailPartner, EmailAccount } = server.notes.db
 
