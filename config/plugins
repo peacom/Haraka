@@ -10,6 +10,7 @@
 # To see the docs for a plugin, run 'haraka -h plugin.name'
 
 # Telegram Alert
+# redis
 telegram
 
 # status
