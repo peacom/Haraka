@@ -288,13 +288,7 @@ exports.queue_forward = function (next, connection) {
         smtp_client.send_command('RSET')
         return
       }
-      // Emit event when forward success
-      server.notes.eventBus?.emit('smtp_forward_success', {
-        harakaId: txn.uuid,
-        recipients: txn.rcpt_to,
-        response: smtp_client.response,
-        providerHost: smtp_client.host,
-      })
+     
       smtp_client.call_next(OK, smtp_client.response)
       smtp_client.release()
     })
