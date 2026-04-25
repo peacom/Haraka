@@ -3,7 +3,12 @@ const { initEmailModel } = require('./email')
 const fs = require('fs')
 
 const initDatabase = (settings) => {
-  const pool = { max: Number(settings.DB_POOL_MAX || 200), min: Number(settings.DB_POOL_MIN || 10), acquire: 30000, idle: 10000 }
+  const pool = {
+    max: Number(settings.DB_POOL_MAX || 200),
+    min: Number(settings.DB_POOL_MIN || 10),
+    acquire: 30000,
+    idle: 10000,
+  }
 
   const dialectOptions = { decimalNumbers: true }
   if (settings.DB_SSL) dialectOptions.ssl = { ca: fs.readFileSync(settings.DB_SSL, 'utf8') }

@@ -1,4 +1,4 @@
-const { DataTypes, Model } = require("sequelize");
+const { DataTypes, Model } = require('sequelize')
 
 class EmailAccount extends Model {
   static init(sequelize, opts) {
@@ -9,11 +9,11 @@ class EmailAccount extends Model {
         password: { type: DataTypes.STRING(256) },
         companyId: { type: DataTypes.INTEGER },
         createdById: { type: DataTypes.INTEGER },
-        createdDate: { type: DataTypes.DATE }
+        createdDate: { type: DataTypes.DATE },
       },
-      { sequelize, tableName: "email_account", modelName: "emailAccount", timestamps: false, ...opts }
-    );
+      { sequelize, tableName: 'email_account', modelName: 'emailAccount', timestamps: false, ...opts },
+    )
   }
 }
 
-module.exports = { EmailAccount };
+module.exports = { EmailAccount }

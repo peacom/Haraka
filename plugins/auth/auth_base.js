@@ -96,7 +96,8 @@ exports.check_user = function (next, connection, credentials, method) {
   function passwd_ok(valid, opts) {
     const status_code = (typeof opts === 'object' && opts.code) || (valid ? 235 : 535)
     const status_message =
-      (typeof opts === 'object' ? opts.message : opts) || (valid ? '2.7.0 Authentication successful' : '5.7.8 Authentication failed')
+      (typeof opts === 'object' ? opts.message : opts) ||
+      (valid ? '2.7.0 Authentication successful' : '5.7.8 Authentication failed')
 
     if (valid) {
       connection.relaying = true
