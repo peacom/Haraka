@@ -18,7 +18,7 @@ exports.hook_connect = function (next, connection) {
   if (isCheckWhitelist !== 'true' || !ips.length) return next()
   if (ipAllowed(remote_ip, ips, this)) return next()
 
-  return next(DENY, `Your IP: ${remote_ip} is not allowed to send email`)
+  return next(DENYDISCONNECT, `Your IP: ${remote_ip} is not allowed to send email`)
 }
 
 function ipAllowed(remote_ip, hosts, plugin) {

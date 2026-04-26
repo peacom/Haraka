@@ -56,14 +56,14 @@ exports.error_handle = async function (next, connection, params) {
   emailLog.info(`start process error_handle`)
   emailLog.info(`error_handle >>>: ${params}`)
   const [statusCode] = params
-  if (Number(statusCode) === 902) return next()
   const { EmailTransaction, EmailPartner, EmailAccount } = server.notes.db
 
   try {
     const txn = connection?.transaction
     const accountRequest = connection.notes.auth_user
     const from = formatAddress(txn?.mail_from.address())
-
+    if (!from) return next()
+    
     await EmailTransaction.create({
       publicId: txn.uuid,
       emailAccountId: connection.notes.account_id,
