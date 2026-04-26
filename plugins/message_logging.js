@@ -14,7 +14,6 @@ exports.register = function () {
   this.register_hook('queue_ok', 'my_queue_outbound', 10)
 }
 
-
 exports.my_queue_outbound = async function (next, connection, params) {
   emailLog.info(`start process my_queue_outbound`)
   const { EmailTransaction, EmailPartner, EmailAccount } = server.notes.db
@@ -44,7 +43,7 @@ exports.my_queue_outbound = async function (next, connection, params) {
     await EmailTransaction.bulkCreate(transactions, {
       include: [{ model: EmailPartner, as: 'emailPartner' }],
     })
-    
+
     emailLog.info(`end process my_queue_outbound`)
     return next()
   } catch (err) {
@@ -57,14 +56,14 @@ exports.error_handle = async function (next, connection, params) {
   emailLog.info(`start process error_handle`)
   emailLog.info(`error_handle >>>: ${params}`)
   const [statusCode] = params
-  if (Number(statusCode) === 902) return next()
   const { EmailTransaction, EmailPartner, EmailAccount } = server.notes.db
 
   try {
     const txn = connection?.transaction
     const accountRequest = connection.notes.auth_user
     const from = formatAddress(txn?.mail_from.address())
-
+    if (!from) return next()
+    
     await EmailTransaction.create({
       publicId: txn.uuid,
       emailAccountId: connection.notes.account_id,
