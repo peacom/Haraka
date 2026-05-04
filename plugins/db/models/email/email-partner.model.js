@@ -6,6 +6,7 @@ class EmailPartner extends Model {
       {
         emailTxnId: { type: DataTypes.INTEGER, primaryKey: true },
         partnerTxnId: { type: DataTypes.STRING(64) },
+        createdDate: { type: DataTypes.DATE },
       },
       { tableName: 'email_partner', modelName: 'emailPartner', timestamps: false, sequelize, ...opts },
     )

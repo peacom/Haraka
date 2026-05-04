@@ -1,4 +1,4 @@
-const { EMAIL_STATUS } = require('./db/models/email/email-transaction.model')
+const { EMAIL_STATUS, EMAIL_ORIGIN } = require('./db/models/email/email-transaction.model')
 const fs = require('fs')
 const path = require('path')
 const { emailLog } = require('./logging/winston')
@@ -20,14 +20,16 @@ exports.my_queue_outbound = async function (next, connection, params) {
 
   try {
     const txn = connection?.transaction
-    const accountRequest = connection.notes.auth_user
     const [partnerTxnId] = params.split(' ').slice(3)
     const from = formatAddress(txn.mail_from.address())
     const recipients = filterDuplicate(txn?.rcpt_to.map((r) => formatAddress(r.address())))
 
     const transactions = recipients.map((rcp) => ({
       publicId: txn.uuid,
-      emailAccountId: connection.notes.account_id,
+      originId: connection.notes.userLogin.accountId,
+      origin: EMAIL_ORIGIN.HARAKA,
+      userId: connection.notes.userLogin.userId,
+      companyId: connection.notes.userLogin.companyId,
       clientIP: connection.remote.ip,
       port: connection.local.port,
       tls: connection.tls.enabled,
@@ -35,9 +37,7 @@ exports.my_queue_outbound = async function (next, connection, params) {
       to: rcp,
       status: EMAIL_STATUS.SENT,
       createdDate: new Date(),
-      emailPartner: {
-        partnerTxnId,
-      },
+      emailPartner: { partnerTxnId, createdDate: new Date() },
     }))
 
     await EmailTransaction.bulkCreate(transactions, {
@@ -60,13 +60,15 @@ exports.error_handle = async function (next, connection, params) {
 
   try {
     const txn = connection?.transaction
-    const accountRequest = connection.notes.auth_user
     const from = formatAddress(txn?.mail_from.address())
     if (!from) return next()
-    
+
     await EmailTransaction.create({
       publicId: txn.uuid,
-      emailAccountId: connection.notes.account_id,
+      originId: connection.notes.userLogin.accountId,
+      origin: EMAIL_ORIGIN.HARAKA,
+      userId: connection.notes.userLogin.userId,
+      companyId: connection.notes.userLogin.companyId,
       clientIP: connection.remote.ip,
       port: connection.local.port,
       tls: connection.tls.enabled,
