@@ -34,9 +34,17 @@ exports.hook_capabilities = function (next, connection) {
 exports.get_plain_passwd = async function (user, connection, cb) {
   if (user && this.cfg.core.use_on_db) {
     const { EmailAccount } = server.notes.db
-    const account = await EmailAccount.findOne({ where: { username: user }, attributes: ['password', 'id'], raw: true })
+    const account = await EmailAccount.findOne({
+      where: { username: user },
+      attributes: ['id', 'password', 'createdById', 'companyId'],
+      raw: true,
+    })
     if (account) {
-      connection.notes.account_id = account.id
+      connection.notes.userLogin = {
+        userId: account.createdById,
+        accountId: account.id,
+        companyId: account.companyId,
+      }
       return cb(account.password)
     }
   } else if (this.cfg.users[user]) return cb(this.cfg.users[user].toString())

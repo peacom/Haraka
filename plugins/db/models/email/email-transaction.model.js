@@ -1,12 +1,29 @@
 const { DataTypes, Model } = require('sequelize')
 
-const EMAIL_STATUS = { PENDING: 1, SENT: 2, FAIL: 3, BOUNCE: 4, DELIVERED: 5, OPEN: 6, CLICK: 7, SPAM: 8 }
+const EMAIL_STATUS = {
+  PENDING: 1,
+  SENT: 2,
+  FAIL: 3,
+  BOUNCE: 4,
+  DELIVERED: 5,
+  OPEN: 6,
+  CLICK: 7,
+  SPAM: 8,
+  UNSUBSCRIBE: 9,
+  RESUBSCRIBE: 10,
+}
 
 const RECIPIENT_TYPE = {
   TO: 1,
   CC: 2,
   BCC: 3,
 }
+
+const EMAIL_ORIGIN = {
+  HARAKA: 1,
+  API: 2,
+}
+
 class EmailTransaction extends Model {
   static init(sequelize, opts) {
     return super.init(
@@ -18,12 +35,16 @@ class EmailTransaction extends Model {
         recipientType: { type: DataTypes.TINYINT },
         port: { type: DataTypes.INTEGER },
         clientIP: { type: DataTypes.TEXT },
-        emailAccountId: { type: DataTypes.INTEGER },
         tls: { type: DataTypes.TINYINT },
         status: { type: DataTypes.TINYINT },
         createdDate: { type: DataTypes.DATE },
         lastUpdated: { type: DataTypes.DATE },
         extraData: { type: DataTypes.TEXT },
+        emailContentId: { type: DataTypes.INTEGER },
+        origin: { type: DataTypes.TINYINT },
+        originId: { type: DataTypes.INTEGER },
+        userId: { type: DataTypes.INTEGER },
+        companyId: { type: DataTypes.INTEGER },
       },
       { sequelize, tableName: 'email_transaction', modelName: 'emailTransaction', timestamps: false, ...opts },
     )
@@ -38,4 +59,4 @@ class EmailTransaction extends Model {
   }
 }
 
-module.exports = { EmailTransaction, EMAIL_STATUS, RECIPIENT_TYPE }
+module.exports = { EmailTransaction, EMAIL_STATUS, RECIPIENT_TYPE, EMAIL_ORIGIN }
